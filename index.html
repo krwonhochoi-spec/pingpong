@@ -55,6 +55,8 @@
   .score-btn:active { transform:scale(.94); background:rgba(0,0,0,.45); }
   .pop { animation: pop .22s ease-out; }
   @keyframes pop { 0%{transform:scale(1.15)} 100%{transform:scale(1)} }
+  .remote-pop { animation: rpop .6s ease-out; }
+  @keyframes rpop { 0%{transform:scale(1.25); color:#facc15} 100%{transform:scale(1)} }
   /* 캘린더 */
   .cal-cell { position:relative; aspect-ratio:1/1; border-radius:.7rem; display:flex; align-items:center; justify-content:center; background:#0b1222; border:1px solid #162033; overflow:hidden; }
   @media (min-width:600px) and (max-width:1023px){ .cal-cell { aspect-ratio: 5/4; } }
@@ -137,7 +139,7 @@
   <main class="min-w-0">
     <!-- 탭 (모바일: 하단 고정 / 태블릿 가로·PC: 상단) -->
     <nav id="tabs" class="fixed bottom-0 inset-x-0 z-30 bg-slate-950/95 border-t border-slate-800 flex lg:static lg:bg-slate-900 lg:border lg:rounded-2xl lg:p-1 lg:mb-4 lg:gap-1" style="padding-bottom:env(safe-area-inset-bottom)">
-      <button class="tab-btn on" data-tab="score"><span class="ti">🏓</span>탁구 사랑</button>
+      <button class="tab-btn on" data-tab="score"><span class="ti">🏓</span>결과 입력</button>
       <button class="tab-btn" data-tab="stats"><span class="ti">📊</span>통계</button>
       <button class="tab-btn" data-tab="history"><span class="ti">🗂️</span>기록 관리</button>
     </nav>
@@ -165,6 +167,7 @@
         </div>
         <div id="eBoard" class="grid grid-cols-2 gap-2.5"></div>
         <div id="eStatus" class="text-center text-[15px] font-extrabold min-h-[22px]"></div>
+        <div id="eLive" class="text-center text-[11px] text-slate-500 min-h-[16px]"></div>
       </div>
 
       <div class="card p-3 space-y-2">
@@ -325,7 +328,8 @@ function svgAvatar(kind, bg, size) {
  * ===================================================================== */
 const K = {
   records: 'pp.records.v1', settings: 'pp.settings.v1', queue: 'pp.queue.v1',
-  entry: 'pp.entry.v2', sample: 'pp.sample.v1', cal: 'pp.calCollapsed.v1', lastSync: 'pp.lastSync.v1'
+  entry: 'pp.entry.v2', sample: 'pp.sample.v1', cal: 'pp.calCollapsed.v1', lastSync: 'pp.lastSync.v1',
+  device: 'pp.device.v1', rev: 'pp.rev.v1', seenSaved: 'pp.seenSaved.v1'
 };
 const SETTINGS_VERSION = 4;
 const DEFAULT_SETTINGS = {
@@ -340,6 +344,8 @@ const DEFAULT_SETTINGS = {
 const SHEET_FIELDS = ['id','date','type','winner','husband_sets','wife_sets','set_Diff','score_detail','duration_min','calories','distance_km','memo','participant','updated_at'];
 const COLOR = { husband: '#38bdf8', wife: '#fb7185' };
 const KEY = { husband: 'h', wife: 'w' };
+/* 실시간 동기화 주기 (ms) */
+const POLL = { score: 3000, other: 8000, error: 10000, legacy: 20000 };
 
 /* =====================================================================
  * 1. 유틸
@@ -361,6 +367,7 @@ const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
 const signed = (n, digits = 1) => (n > 0 ? '+' : n < 0 ? '−' : '±') + Math.abs(n).toFixed(digits);
 const uid = () => Date.now() + '-' + Math.random().toString(36).slice(2, 8);
 const isSample = r => String(r.id).startsWith('sample-');
+const hhmmss = t => { const d = new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
 
 const store = {
   get(k, def) { try { const v = localStorage.getItem(k); return v == null ? def : JSON.parse(v); } catch { return def; } },
@@ -372,6 +379,7 @@ function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; le
 /* =====================================================================
  * 2. 상태
  * ===================================================================== */
+const DEVICE_ID = store.get(K.device, null) || (() => { const id = 'd-' + uid(); store.set(K.device, id); return id; })();
 let settings = loadSettings();
 let records  = [];
 let queue    = store.get(K.queue, []);
@@ -384,6 +392,10 @@ let histMonth = 'all', histLimit = 40;
 let charts = {};
 let dayModal = null;
 let syncState = 'local', syncMsg = '';
+let lastRev = String(store.get(K.rev, ''));   // 마지막으로 받은 시트 변경번호
+let localGen = 0;                             // 이 폰에서 기록을 바꿀 때마다 +1 (조회 중 경합 방지)
+let liveSupported = null;                     // null=미확인, true=실시간 지원, false=구버전 Code.gs
+let lastRemoteAt = 0;                         // 상대 폰 점수 변경 수신 시각
 
 function loadSettings() {
   const s = store.get(K.settings, {}) || {};
@@ -408,7 +420,7 @@ function loadSettings() {
 function saveSettings() { store.set(K.settings, settings); }
 function setsToWin() { return clamp(Math.round(num(settings.setsToWin, 10)), 1, 50); }
 function maxSets() { return setsToWin() * 2 - 1; }
-function freshEntry(date) { const b = setsToWin(); return { h: b, w: b, date: date || todayStr(), memo: '' }; }
+function freshEntry(date) { const b = setsToWin(); return { h: b, w: b, date: date || todayStr(), memo: '', ver: 0, dirty: false, saved: null }; }
 function saveEntry() { store.set(K.entry, entry); }
 function persistRecords() { store.set(K.records, records); }
 
@@ -481,21 +493,24 @@ function netErr(e) {
   if (e instanceof TypeError) return new Error('네트워크/CORS 오류 – 웹 앱 액세스 권한이 "모든 사용자"인지 확인');
   return e;
 }
+const isUnknownAction = e => /알 수 없는 action/.test(String(e && e.message));
 const api = {
   enabled() { return !!settings.gasUrl; },
   async get(params, url = settings.gasUrl, token = settings.token) {
     let u; try { u = new URL(url); } catch { throw new Error('웹 앱 URL 형식이 올바르지 않음'); }
     Object.entries({ ...params, token }).forEach(([k, v]) => { if (v) u.searchParams.set(k, v); });
-    try { return await parseRes(await fetchT(u.toString(), { method: 'GET', redirect: 'follow' })); }
+    u.searchParams.set('_', Date.now());                     // 브라우저/중간 캐시 방지
+    try { return await parseRes(await fetchT(u.toString(), { method: 'GET', redirect: 'follow', cache: 'no-store' })); }
     catch (e) { throw netErr(e); }
   },
   async post(body, url = settings.gasUrl, token = settings.token) {
     try {
       // text/plain → CORS preflight 없이 전송 (GAS doPost에서 JSON.parse)
-      return await parseRes(await fetchT(url, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ ...body, token }) }));
+      return await parseRes(await fetchT(url, { method: 'POST', redirect: 'follow', cache: 'no-store', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ ...body, token }) }));
     } catch (e) { throw netErr(e); }
   },
-  async list() { return (await this.get({ action: 'list' })).data || []; }
+  /** { data:[...], rev } */
+  async list() { return await this.get({ action: 'list' }); }
 };
 
 let syncing = false;
@@ -506,9 +521,10 @@ async function flushQueue() {
   const ops = queue.slice();
   let ok = false;
   try {
-    await api.post({ action: 'batch', ops });
+    const res = await api.post({ action: 'batch', ops });
     queue = queue.slice(ops.length); store.set(K.queue, queue);
     ok = true; setStatus('ok');
+    if (res.skipped && res.skipped.length) toast(`시트 반영 제외 ${res.skipped.length}건 — ${res.skipped[0].error}`, 'warn');
   } catch (e) { setStatus('error', e.message); }
   finally { syncing = false; }
   if (ok && queue.length) return flushQueue();
@@ -521,23 +537,32 @@ function applyOpsLocal(list, ops) {
   }
   return [...map.values()];
 }
+let refreshing = false;
+/** 시트 전체 재조회. 미전송 대기분은 덮어쓰지 않고 위에 겹쳐 유지 (대기열이 있어도 상대 폰 변경분은 반영) */
 async function refreshFromServer(silent = true) {
-  if (!api.enabled()) return;
-  await flushQueue();
-  if (queue.length) return;            // 미전송 데이터 보호
-  setStatus('sync');
+  if (!api.enabled() || refreshing) return;
+  refreshing = true;
   try {
-    const data = await api.list();
-    let list = normList(data);
-    if (queue.length) list = applyOpsLocal(list, queue);
-    records = list; persistRecords();
-    store.del(K.sample); store.set(K.lastSync, Date.now());
-    setStatus('ok'); renderAll();
-    if (!silent) toast('Google Sheets와 동기화 완료', 'ok');
+    await flushQueue();
+    if (!silent) setStatus('sync');
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const gen = localGen;
+      const res = await api.list();
+      if (gen !== localGen) continue;                       // 조회 중 이 폰에서 저장/삭제 발생 → 다시 조회
+      let list = normList(res.data || []);
+      if (queue.length) list = applyOpsLocal(list, queue);
+      records = list; persistRecords();
+      if (res.rev != null) { lastRev = String(res.rev); store.set(K.rev, lastRev); }
+      store.del(K.sample); store.set(K.lastSync, Date.now());
+      if (!queue.length) setStatus('ok'); else renderStatus();
+      renderAll();
+      if (!silent) toast('Google Sheets와 동기화 완료', 'ok');
+      return;
+    }
   } catch (e) {
     setStatus('error', e.message);
     if (!silent) toast('동기화 실패: ' + e.message, 'error');
-  }
+  } finally { refreshing = false; }
 }
 
 /* 저장/삭제 (낙관적 업데이트 → 대기열 → 시트 반영) */
@@ -545,31 +570,133 @@ function saveRecord(rec) {
   const x = finalize(rec);
   const i = records.findIndex(r => r.id === x.id);
   if (i >= 0) records[i] = x; else records.push(x);
-  persistRecords(); renderAll();
+  localGen++; persistRecords(); renderAll();
   if (api.enabled()) enqueue({ op: 'upsert', record: x });
   return x;
 }
 function deleteRecord(id) {
   records = records.filter(r => r.id !== id);
-  persistRecords(); renderAll();
+  localGen++; persistRecords(); renderAll();
   if (api.enabled()) enqueue({ op: 'delete', id });
 }
+
+/* =====================================================================
+ * 4-1. 실시간 동기화
+ *  - 결과 입력 화면의 진행 중 세트 스코어를 시트 서버(LIVE_STATE)에 공유
+ *  - 화면이 켜져 있는 동안 3초(다른 탭 8초)마다 state 조회
+ *    → 상대 폰 점수 변경 즉시 반영, 기록 변경번호(rev)가 바뀌면 전체 재조회
+ *  - 구버전 Code.gs면 20초마다 전체 재조회로 자동 대체
+ * ===================================================================== */
+let liveTimer = null, livePushing = false, entryGen = 0;
+let pollTimer = null, polling = false;
+
+/** 이 폰에서 진행 중 스코어를 바꿨을 때 호출 → 잠시 후 서버로 전송 */
+function touchEntry(delay = 250) {
+  entryGen++; entry.dirty = true; saveEntry();
+  if (!api.enabled() || liveSupported === false) return;
+  clearTimeout(liveTimer); liveTimer = setTimeout(pushLive, delay);
+}
+async function pushLive() {
+  if (!api.enabled() || liveSupported === false || !entry.dirty || livePushing) return;
+  livePushing = true;
+  const gen = entryGen;
+  const live = { h: entry.h, w: entry.w, date: entry.date || todayStr(), memo: entry.memo || '', device: DEVICE_ID, saved: entry.saved || null };
+  try {
+    const res = await api.post({ action: 'live', live });
+    liveSupported = true;
+    if (res.live && res.live.ver) entry.ver = Math.max(num(entry.ver), num(res.live.ver));
+    if (gen === entryGen) entry.dirty = false;
+    saveEntry();
+    if (syncState === 'error' && !queue.length) setStatus('ok'); else renderStatus();
+  } catch (e) {
+    if (isUnknownAction(e)) {
+      liveSupported = false; entry.dirty = false; saveEntry(); renderStatus();
+      toast('Code.gs가 구버전입니다 — 실시간 점수 공유는 재배포 후 사용 가능', 'warn');
+    } else setStatus('error', e.message);
+  } finally {
+    livePushing = false;
+    if (entry.dirty && gen !== entryGen) { clearTimeout(liveTimer); liveTimer = setTimeout(pushLive, 100); }
+  }
+}
+/** 서버의 진행 중 스코어가 더 최신이면 이 폰 화면에 반영 */
+function applyRemoteLive(live) {
+  if (!live || !(num(live.ver) > num(entry.ver))) return;
+  if (entry.dirty || livePushing) return;                  // 이 폰의 미전송 입력이 우선 (마지막 입력 우선)
+  const S = setsToWin();
+  const fromOther = live.device !== DEVICE_ID;
+  const nh = clamp(Math.round(num(live.h, S)), 0, S), nw = clamp(Math.round(num(live.w, S)), 0, S);
+  const changedWho = nh !== entry.h ? 'husband' : nw !== entry.w ? 'wife' : null;
+  entry.h = nh; entry.w = nw;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(live.date))) entry.date = live.date;
+  if (document.activeElement !== $('#eMemo')) entry.memo = String(live.memo || '');
+  entry.saved = live.saved || null;
+  entry.ver = num(live.ver);
+  saveEntry();
+  if (fromOther) lastRemoteAt = Date.now();
+  renderEntry(fromOther ? changedWho : null, fromOther);
+  const sv = live.saved;
+  if (fromOther && sv && sv.id && sv.id !== store.get(K.seenSaved, '')) {
+    store.set(K.seenSaved, sv.id);
+    if (Math.abs(Date.now() - num(sv.at)) < 5 * 60000) toast('상대방 폰에서 경기 결과를 저장했습니다', 'ok');
+  }
+}
+function pollDelay() {
+  if (liveSupported === false) return POLL.legacy;
+  if (syncState === 'error') return POLL.error;
+  return activeTab === 'score' ? POLL.score : POLL.other;
+}
+function schedulePoll(ms) {
+  clearTimeout(pollTimer); pollTimer = null;
+  if (!api.enabled() || document.visibilityState === 'hidden') return;
+  pollTimer = setTimeout(poll, ms ?? pollDelay());
+}
+async function poll() {
+  if (!api.enabled() || document.visibilityState === 'hidden' || polling) return;
+  polling = true;
+  try {
+    if (queue.length) await flushQueue();
+    if (entry.dirty && liveSupported !== false) await pushLive();
+    if (liveSupported === false) { await refreshFromServer(true); return; }
+    const s = await api.get({ action: 'state' });
+    liveSupported = true;
+    applyRemoteLive(s.live);
+    if (String(s.rev) !== lastRev) await refreshFromServer(true);
+    else if (syncState !== 'ok' && !queue.length) setStatus('ok');
+    else renderStatus();
+  } catch (e) {
+    if (isUnknownAction(e)) { liveSupported = false; renderStatus(); await refreshFromServer(true); }
+    else setStatus('error', e.message);
+  } finally {
+    polling = false; schedulePoll();
+  }
+}
+function stopSync() { clearTimeout(pollTimer); pollTimer = null; clearTimeout(liveTimer); liveSupported = null; }
 
 function setStatus(s, msg = '') { syncState = s; syncMsg = msg; renderStatus(); }
 function renderStatus() {
   const chip = $('#syncChip');
   const sample = store.get(K.sample, false) && records.some(isSample);
   let txt, cls = '';
-  if (!api.enabled()) { txt = sample ? '🧪 샘플' : '📱 로컬'; }
+  if (!api.enabled()) { txt = sample ? '🧪 샘플' : '📱 로컬'; cls = 'text-amber-300 border-amber-500/50'; }
   else if (syncState === 'sync') { txt = '⏳ 동기화'; }
   else if (syncState === 'error') { txt = `⚠️ 실패${queue.length ? ' · 대기 ' + queue.length : ''}`; cls = 'text-amber-300 border-amber-500/50'; }
-  else { txt = queue.length ? `☁️ 대기 ${queue.length}` : '☁️ 연결됨'; cls = 'text-emerald-300 border-emerald-500/40'; }
+  else if (queue.length) { txt = `☁️ 대기 ${queue.length}`; cls = 'text-emerald-300 border-emerald-500/40'; }
+  else if (liveSupported) { txt = '🟢 실시간'; cls = 'text-emerald-300 border-emerald-500/40'; }
+  else { txt = '☁️ 연결됨'; cls = 'text-emerald-300 border-emerald-500/40'; }
   const sp = txt.indexOf(' ');
   chip.innerHTML = sp > 0 ? `${esc(txt.slice(0, sp))}<span class="hidden min-[400px]:inline">${esc(txt.slice(sp + 1))}</span>` : esc(txt);
   chip.setAttribute('aria-label', txt);
   chip.className = 'chip flex-none max-w-[30vw] overflow-hidden text-ellipsis ' + cls;
   chip.title = syncMsg || (api.enabled() ? '탭하여 지금 동기화' : '탭하여 Google Sheets 연결 설정');
   $('#sampleBanner').hidden = !sample;
+  renderLiveNote();
+}
+function renderLiveNote() {
+  const el = $('#eLive'); if (!el) return;
+  if (!api.enabled()) { el.innerHTML = '<span class="text-amber-300">📱 이 폰에만 저장 중 — ⚙️ 설정에서 시트 연결 시 두 폰 공유</span>'; return; }
+  if (liveSupported === false) { el.textContent = '☁️ 저장된 기록만 20초마다 공유 (진행 중 점수 공유는 Code.gs 재배포 필요)'; return; }
+  if (liveSupported) { el.textContent = lastRemoteAt ? `🟢 두 폰 실시간 공유 중 · 상대방 변경 ${hhmmss(lastRemoteAt)}` : '🟢 두 폰 실시간 공유 중'; return; }
+  el.textContent = '';
 }
 
 /* =====================================================================
@@ -828,6 +955,7 @@ function openRecordModal(rec, defaults = {}) {
 /* =====================================================================
  * 9. 경기 결과 입력 — 최종 세트 스코어만 기록
  *    (경기 방식: 10세트 선승, 최대 19세트 / 세트별 점수는 실물 스코어보드 사용)
+ *    ※ 진행 중 스코어는 두 폰이 실시간 공유 (4-1 참조)
  * ===================================================================== */
 function entryState(e = entry) {
   const S = setsToWin();
@@ -835,7 +963,7 @@ function entryState(e = entry) {
   const w = e.h > e.w ? 'husband' : 'wife';
   return { kind: Math.max(e.h, e.w) >= S ? 'done' : 'partial', winner: w, total: e.h + e.w };
 }
-function renderEntry(changed) {
+function renderEntry(changed, remote = false) {
   const e = entry, S = setsToWin();
   $('#eDate').value = e.date || todayStr();
   const st = entryState();
@@ -848,7 +976,7 @@ function renderEntry(changed) {
       </button>
       <div class="flex gap-2 p-2"><button class="score-btn" data-minus="${w}" aria-label="1세트 빼기">−</button><button class="score-btn" data-plus="${w}" aria-label="1세트 더하기">＋</button></div>
     </div>`).join('');
-  if (changed) { const el = $(`[data-score="${changed}"]`); el && el.classList.add('pop'); }
+  if (changed) { const el = $(`[data-score="${changed}"]`); el && el.classList.add(remote ? 'remote-pop' : 'pop'); }
   $$('[data-base]').forEach(x => x.textContent = S);
   $('#eRule').textContent = `${S}세트 선승 · 최대 ${maxSets()}세트 · 진 쪽 세트 수만 내리면 됩니다`;
   const status = $('#eStatus'), save = $('#eSave');
@@ -863,12 +991,13 @@ function renderEntry(changed) {
     save.disabled = false; save.innerHTML = `💾 저장 · ${nm} 승 ${pairTxt(e)}`;
   }
   if (document.activeElement !== $('#eMemo')) $('#eMemo').value = e.memo || '';
+  renderLiveNote();
 }
 function setScore(who, v) {
   const S = setsToWin();
   if (v < 0) return;
   if (v > S) { toast(`${S}세트 선승 경기라 최대 ${S}세트입니다`, 'warn'); return; }
-  entry[KEY[who]] = v; buzz(); saveEntry(); renderEntry(who);
+  entry[KEY[who]] = v; buzz(); touchEntry(); renderEntry(who);
 }
 function openPicker(who) {
   const cur = entry[KEY[who]];
@@ -885,7 +1014,11 @@ async function saveMatch() {
     husband_sets: e.h, wife_sets: e.w, score_detail: '', duration_min: '', calories: '',
     memo: ($('#eMemo').value || '').trim()
   });
-  entry = freshEntry(e.date); saveEntry(); renderEntry();
+  // 입력판 초기화 + 상대 폰에도 초기화·저장 사실 전파 (중복 저장 방지)
+  const ver = entry.ver;
+  entry = freshEntry(e.date); entry.ver = ver; entry.saved = { id: rec.id, at: Date.now() };
+  store.set(K.seenSaved, rec.id);
+  touchEntry(0); renderEntry();
   buzz(40);
   const wk = rec.winner;
   const m = openModal({
@@ -1007,6 +1140,15 @@ function renderHistory() {
 /* =====================================================================
  * 13. 설정 모달
  * ===================================================================== */
+function connectLink(url, token) {
+  const p = new URLSearchParams({ gas: url }); if (token) p.set('tk', token);
+  return `${location.origin}${location.pathname}#${p.toString()}`;
+}
+function gasStatusText() {
+  if (!api.enabled()) return 'URL 미입력 시 이 폰에만 저장됩니다. 두 폰 모두 같은 URL을 입력해야 공유됩니다.';
+  const live = liveSupported ? '🟢 실시간 공유 중' : liveSupported === false ? '⚠️ 구버전 Code.gs (저장 기록만 20초 주기 공유)' : '연결됨';
+  return `${live} · 미전송 대기 ${queue.length}건${syncMsg ? ' · ' + syncMsg : ''}`;
+}
 function openSettings() {
   const s = settings;
   const player = (who, label) => `<div class="rounded-xl border border-slate-800 p-3 space-y-3" data-player="${who}">
@@ -1026,17 +1168,19 @@ function openSettings() {
     </section>
     <section class="space-y-3"><h3 class="font-extrabold text-slate-300">🏓 경기 방식</h3>
       <label class="fld w-40">선승 세트 수<input name="setsToWin" type="number" min="1" max="50" inputmode="numeric" class="inp" value="${setsToWin()}"></label>
-      <p class="text-[11px] text-slate-500">현재: ${setsToWin()}세트 선승 · 최대 ${maxSets()}세트. 결과 입력은 ${setsToWin()} : ${setsToWin()}에서 시작 → 진 쪽 세트 수만 내리면 됩니다.</p>
+      <p class="text-[11px] text-slate-500">현재: ${setsToWin()}세트 선승 · 최대 ${maxSets()}세트. 결과 입력은 ${setsToWin()} : ${setsToWin()}에서 시작 → 진 쪽 세트 수만 내리면 됩니다. (두 폰 같은 값 권장)</p>
     </section>
-    <section class="space-y-3"><h3 class="font-extrabold text-slate-300">☁️ Google Sheets 연동</h3>
+    <section class="space-y-3"><h3 class="font-extrabold text-slate-300">☁️ Google Sheets 연동 (두 폰 공유)</h3>
       <label class="fld">웹 앱 URL<input name="gasUrl" class="inp font-mono text-sm" placeholder="https://script.google.com/macros/s/XXXX/exec" value="${esc(s.gasUrl)}" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
       <label class="fld">API 토큰 (Apps Script의 API_TOKEN과 동일, 미사용 시 비움)<input name="token" class="inp font-mono text-sm" value="${esc(s.token)}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
       <div class="grid grid-cols-2 gap-2">
         <button type="button" class="btn" data-act="test">🔌 연결 테스트</button>
         <button type="button" class="btn" data-act="sync">🔄 지금 동기화</button>
+        <button type="button" class="btn col-span-2 btn-ok" data-act="share">📲 상대방 폰 연결 링크 보내기</button>
         <button type="button" class="btn col-span-2" data-act="push">⬆️ 이 폰의 기록 전체 업로드</button>
       </div>
-      <div data-out="gas" class="text-xs text-slate-400">${api.enabled() ? `연결됨 · 미전송 대기 ${queue.length}건${syncMsg ? ' · ' + esc(syncMsg) : ''}` : 'URL 미입력 시 이 폰에만 저장됩니다.'}</div>
+      <p class="text-[11px] text-slate-500">연결 링크를 상대방 폰에서 열면 같은 URL·토큰이 자동 입력됩니다 (토큰 포함 — 가족에게만 보내세요).</p>
+      <div data-out="gas" class="text-xs text-slate-400">${esc(gasStatusText())}</div>
     </section>
     <section class="space-y-3"><h3 class="font-extrabold text-slate-300">🗄️ 데이터 관리</h3>
       <div class="grid grid-cols-2 gap-2">
@@ -1067,10 +1211,25 @@ function openSettings() {
   act('test').onclick = async () => {
     const url = F('gasUrl').value.trim(); if (!url) return toast('웹 앱 URL을 입력해 주세요', 'warn');
     out.textContent = '⏳ 연결 확인 중...';
-    try { const j = await api.get({ action: 'ping' }, url, F('token').value.trim()); out.innerHTML = `<span class="text-emerald-300">✅ 연결 성공 · 시트 "${esc(j.sheet)}" · ${j.count ?? '-'}행</span>`; }
+    try {
+      const j = await api.get({ action: 'ping' }, url, F('token').value.trim());
+      const live = (j.features || []).includes('live');
+      out.innerHTML = `<span class="text-emerald-300">✅ 연결 성공 · 시트 "${esc(j.sheet)}" · ${j.count ?? '-'}행</span><br>` +
+        (live ? '<span class="text-emerald-300">🟢 실시간 공유 지원 (Code.gs v' + esc(j.version) + ')</span>'
+              : '<span class="text-amber-300">⚠️ 구버전 Code.gs — 진행 중 점수 공유 불가. Apps Script에 새 Code.gs를 붙여넣고 「배포 관리 → ✏️ → 새 버전 → 배포」 필요</span>');
+    }
     catch (e) { out.innerHTML = `<span class="text-rose-300">❌ ${esc(e.message)}</span>`; }
   };
-  act('sync').onclick = async () => { if (!api.enabled()) return toast('먼저 URL을 입력하고 설정을 저장해 주세요', 'warn'); await refreshFromServer(false); out.textContent = `대기 ${queue.length}건`; };
+  act('sync').onclick = async () => { if (!api.enabled()) return toast('먼저 URL을 입력하고 설정을 저장해 주세요', 'warn'); await refreshFromServer(false); schedulePoll(0); out.textContent = gasStatusText(); };
+  act('share').onclick = async () => {
+    const url = F('gasUrl').value.trim(); if (!url) return toast('웹 앱 URL을 먼저 입력해 주세요', 'warn');
+    const link = connectLink(url, F('token').value.trim());
+    try {
+      if (navigator.share) { await navigator.share({ title: '탁구사랑 클럽 시트 연결', text: '이 링크를 열면 같은 Google Sheets에 연결됩니다.', url: link }); return; }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    try { await navigator.clipboard.writeText(link); toast('연결 링크를 복사했습니다 — 상대방에게 보내 주세요', 'ok'); }
+    catch { out.innerHTML = `<div class="text-slate-300 mb-1">아래 링크를 길게 눌러 복사해 상대방에게 보내 주세요</div><div class="break-all select-all font-mono text-[11px] text-slate-200">${esc(link)}</div>`; }
+  };
   act('push').onclick = async () => {
     if (!api.enabled()) return toast('먼저 URL을 입력하고 설정을 저장해 주세요', 'warn');
     const real = records.filter(r => !isSample(r));
@@ -1093,7 +1252,7 @@ function openSettings() {
       const list = normList(arr);
       if (!await askConfirm(`탁구 경기 ${list.length}건을 가져옵니다. 같은 id는 덮어씁니다.`)) return;
       const map = new Map(records.map(r => [r.id, r])); list.forEach(r => map.set(r.id, r));
-      records = [...map.values()]; persistRecords(); renderAll();
+      records = [...map.values()]; localGen++; persistRecords(); renderAll();
       if (api.enabled()) { list.forEach(r => queue.push({ op: 'upsert', record: r })); store.set(K.queue, queue); flushQueue(); }
       toast(`${list.length}건 가져오기 완료`, 'ok');
     } catch (err) { toast('가져오기 실패: ' + err.message, 'error'); }
@@ -1106,7 +1265,7 @@ function openSettings() {
   act('clearSample').onclick = () => { clearSample(); };
   act('wipe').onclick = async () => {
     if (!await askConfirm('이 폰의 모든 기록 캐시와 미전송 대기열을 삭제합니다. (설정은 유지)', { ok: '초기화', danger: true })) return;
-    records = []; queue = []; store.set(K.queue, queue); store.del(K.sample); persistRecords(); renderAll();
+    records = []; queue = []; localGen++; lastRev = ''; store.del(K.rev); store.set(K.queue, queue); store.del(K.sample); persistRecords(); renderAll();
     toast('이 폰의 데이터를 초기화했습니다');
     if (api.enabled()) refreshFromServer(false);
   };
@@ -1124,11 +1283,11 @@ function openSettings() {
       gasUrl: F('gasUrl').value.trim(), token: F('token').value.trim()
     };
     saveSettings(); m.close();
-    if (prevBase !== base) { entry.h = Math.min(entry.h === prevBase ? base : entry.h, base); entry.w = Math.min(entry.w === prevBase ? base : entry.w, base); saveEntry(); }
+    if (prevBase !== base) { entry.h = Math.min(entry.h === prevBase ? base : entry.h, base); entry.w = Math.min(entry.w === prevBase ? base : entry.w, base); touchEntry(); }
     renderEntry(); renderAll();
     toast('설정을 저장했습니다', 'ok');
     if (settings.gasUrl && (settings.gasUrl !== prevUrl || settings.token !== prevToken)) await connectGas();
-    else if (!settings.gasUrl) setStatus('local');
+    else if (!settings.gasUrl) { stopSync(); setStatus('local'); }
   };
 }
 function download(name, text, mime) {
@@ -1142,25 +1301,43 @@ function clearSample() {
 }
 /** 새 GAS URL 연결: 시트가 비어 있고 이 폰에 실데이터가 있으면 업로드 제안 */
 async function connectGas() {
+  stopSync();
+  entry.ver = 0; entry.dirty = false; saveEntry();          // 새 서버 기준으로 진행 중 스코어 재동기화
   setStatus('sync');
   try {
-    const raw = await api.list();
-    const data = normList(raw);
+    const res = await api.list();
+    const data = normList(res.data || []);
+    if (res.rev != null) { lastRev = String(res.rev); store.set(K.rev, lastRev); }
     const real = records.filter(r => !isSample(r));
     if (!data.length && real.length) {
       if (await askConfirm(`연결된 시트가 비어 있습니다.\n이 폰의 경기 ${real.length}건을 시트에 업로드할까요?\n(취소 시 이 폰 기록은 백업 후 시트 데이터로 교체)`, { ok: '업로드' })) {
         queue = real.map(r => ({ op: 'upsert', record: r })); store.set(K.queue, queue);
-        records = real; persistRecords(); store.del(K.sample);
+        records = real; localGen++; persistRecords(); store.del(K.sample);
         await flushQueue(); renderAll();
         toast(queue.length ? '업로드 실패 — 자동 재시도 예정' : `${real.length}건 업로드 완료`, queue.length ? 'warn' : 'ok');
+        schedulePoll(0);
         return;
       }
       store.set('pp.backup.' + Date.now(), real);
     }
-    records = data; persistRecords(); store.del(K.sample); store.set(K.lastSync, Date.now());
+    records = data; localGen++; persistRecords(); store.del(K.sample); store.set(K.lastSync, Date.now());
     setStatus('ok'); renderAll();
     toast(`Google Sheets 연결 완료 · ${records.length}경기 불러옴`, 'ok');
   } catch (e) { setStatus('error', e.message); toast('연결 실패: ' + e.message, 'error'); }
+  schedulePoll(0);
+}
+/** 상대방이 보낸 연결 링크(#gas=...&tk=...)로 열었을 때 자동 연결 */
+async function applyConnectLink() {
+  if (!/(^#|&)gas=/.test(location.hash)) return false;
+  const p = new URLSearchParams(location.hash.slice(1));
+  const url = (p.get('gas') || '').trim(), tk = (p.get('tk') || '').trim();
+  try { history.replaceState(null, '', location.pathname + location.search); } catch {}
+  if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)) { toast('연결 링크 형식이 올바르지 않습니다', 'error'); return false; }
+  if (url === settings.gasUrl && tk === settings.token) { toast('이미 같은 시트에 연결되어 있습니다', 'ok'); return false; }
+  if (!await askConfirm(`상대방이 보낸 Google Sheets에 연결할까요?\n\n${url.slice(0, 70)}…`, { ok: '연결', title: '시트 연결' })) return false;
+  settings.gasUrl = url; settings.token = tk; saveSettings();
+  await connectGas();
+  return true;
 }
 
 /* =====================================================================
@@ -1190,11 +1367,13 @@ function renderAll() {
   if (activeTab === 'stats') renderStats();
 }
 function switchTab(t) {
+  const prev = activeTab;
   activeTab = t;
   $$('#tabs .tab-btn').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
   ['score', 'stats', 'history'].forEach(x => { $('#tab-' + x).hidden = x !== t; });
   if (t === 'stats') renderStats();
   if (window.innerWidth < 1024) window.scrollTo({ top: Math.max(0, $('main').offsetTop - 64), behavior: 'smooth' });
+  if (t === 'score' && prev !== 'score' && api.enabled()) schedulePoll(0);
 }
 function bindSeg(id, cb) {
   $$('#' + id + ' .seg-btn').forEach(b => b.onclick = () => {
@@ -1220,19 +1399,19 @@ function bind() {
   // 탭
   $$('#tabs .tab-btn').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
 
-  // 결과 입력
+  // 결과 입력 (모든 변경은 touchEntry → 상대 폰에 공유)
   $('#eBoard').addEventListener('click', e => {
     const p = e.target.closest('[data-plus]'), mi = e.target.closest('[data-minus]'), pk = e.target.closest('[data-pick]');
     if (mi) setScore(mi.dataset.minus, entry[KEY[mi.dataset.minus]] - 1);
     else if (p) setScore(p.dataset.plus, entry[KEY[p.dataset.plus]] + 1);
     else if (pk) openPicker(pk.dataset.pick);
   });
-  $('#eReset').onclick = () => { entry.h = setsToWin(); entry.w = setsToWin(); saveEntry(); renderEntry(); };
+  $('#eReset').onclick = () => { entry.h = setsToWin(); entry.w = setsToWin(); touchEntry(); renderEntry(); };
   $('#eSave').onclick = saveMatch;
-  $('#eDate').onchange = e => { entry.date = e.target.value || todayStr(); saveEntry(); };
-  $('#eToday').onclick = () => { entry.date = todayStr(); saveEntry(); renderEntry(); };
-  $('#eYest').onclick = () => { const d = new Date(); d.setDate(d.getDate() - 1); entry.date = ymd(d); saveEntry(); renderEntry(); };
-  $('#eMemo').oninput = e => { entry.memo = e.target.value; saveEntry(); };
+  $('#eDate').onchange = e => { entry.date = e.target.value || todayStr(); touchEntry(); };
+  $('#eToday').onclick = () => { entry.date = todayStr(); touchEntry(); renderEntry(); };
+  $('#eYest').onclick = () => { const d = new Date(); d.setDate(d.getDate() - 1); entry.date = ymd(d); touchEntry(); renderEntry(); };
+  $('#eMemo').oninput = e => { entry.memo = e.target.value; touchEntry(800); };
 
   // 통계
   bindSeg('segRange', v => { statsRange = +v; renderStats(); });
@@ -1256,7 +1435,7 @@ function bind() {
 
   // 헤더
   $('#btnSettings').onclick = openSettings;
-  $('#syncChip').onclick = () => api.enabled() ? refreshFromServer(false) : openSettings();
+  $('#syncChip').onclick = async () => { if (!api.enabled()) return openSettings(); await refreshFromServer(false); schedulePoll(0); };
   $('#btnClearSample').onclick = clearSample;
 
   // 홈 화면 설치 (갤럭시: Chrome / 삼성 인터넷)
@@ -1269,12 +1448,19 @@ function bind() {
   };
   window.addEventListener('appinstalled', () => { $('#btnInstall').hidden = true; toast('홈 화면에 설치되었습니다', 'ok'); });
 
-  // 앱 복귀 시 1분 이상 지났으면 시트 재조회 (상대방 폰 변경분 반영)
+  // 화면이 켜지면 즉시 조회 재개, 꺼지면 조회 중단 (배터리·할당량 절약)
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState !== 'visible') return;
-    if (api.enabled() && Date.now() - store.get(K.lastSync, 0) > 60000) refreshFromServer(true);
+    if (document.visibilityState === 'visible') {
+      if (!api.enabled()) return;
+      if (Date.now() - store.get(K.lastSync, 0) > 60000) refreshFromServer(true);   // 시트 직접 수정분 등 안전 재조회
+      schedulePoll(0);
+    } else {
+      clearTimeout(pollTimer); pollTimer = null;
+      if (entry.dirty) pushLive();
+    }
   });
-  window.addEventListener('online', () => flushQueue());
+  window.addEventListener('pageshow', e => { if (e.persisted && api.enabled()) schedulePoll(0); });
+  window.addEventListener('online', () => { flushQueue(); schedulePoll(0); });
 }
 
 /* =====================================================================
@@ -1284,12 +1470,19 @@ function init() {
   if (window.Chart) { Chart.defaults.color = '#cbd5e1'; Chart.defaults.font.family = getComputedStyle(document.body).fontFamily; }
   const saved = store.get(K.records, null);
   if (Array.isArray(saved)) { records = normList(saved); if (records.length !== saved.length) persistRecords(); }
-  else if (!settings.gasUrl) { records = makeSample(); store.set(K.sample, true); persistRecords(); }   // 최초 실행: 샘플 모드
+  else if (!settings.gasUrl && !/(^#|&)gas=/.test(location.hash)) { records = makeSample(); store.set(K.sample, true); persistRecords(); }   // 최초 실행: 샘플 모드
   saveSettings();
   if (!entry || entry.sets || !(entry.h >= 0) || entry.h > setsToWin() || entry.w > setsToWin()) entry = freshEntry(entry?.date);
-  delete entry.duration; saveEntry();
+  delete entry.duration;
+  if (!Number.isFinite(entry.ver)) entry.ver = 0;
+  saveEntry();
   bind(); renderEntry(); renderAll();
-  if (api.enabled()) refreshFromServer(true);
+  (async () => {
+    const linked = await applyConnectLink();
+    if (!api.enabled() || linked) return;          // connectGas가 조회 시작
+    await refreshFromServer(true);
+    schedulePoll(0);
+  })();
   // 오프라인 실행 / 홈 화면 앱 지원 (GitHub Pages 등 https 환경)
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
