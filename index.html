@@ -154,6 +154,7 @@
           <button id="eToday" class="btn btn-sm !px-2.5">오늘</button>
           <button id="eYest" class="btn btn-sm !px-2.5">어제</button>
         </div>
+        <p id="eDateNote" hidden class="text-[11px] text-amber-300 mt-1.5 pl-8"></p>
       </div>
 
       <!-- 최종 세트 스코어 -->
@@ -396,6 +397,7 @@ let lastRev = String(store.get(K.rev, ''));   // 마지막으로 받은 시트 �
 let localGen = 0;                             // 이 폰에서 기록을 바꿀 때마다 +1 (조회 중 경합 방지)
 let liveSupported = null;                     // null=미확인, true=실시간 지원, false=구버전 Code.gs
 let lastRemoteAt = 0;                         // 상대 폰 점수 변경 수신 시각
+let shownDay = todayStr();                    // 화면이 기준으로 삼고 있는 '오늘' (자정 경과 감지용)
 
 function loadSettings() {
   const s = store.get(K.settings, {}) || {};
@@ -420,9 +422,25 @@ function loadSettings() {
 function saveSettings() { store.set(K.settings, settings); }
 function setsToWin() { return clamp(Math.round(num(settings.setsToWin, 10)), 1, 50); }
 function maxSets() { return setsToWin() * 2 - 1; }
-function freshEntry(date) { const b = setsToWin(); return { h: b, w: b, date: date || todayStr(), memo: '', ver: 0, dirty: false, saved: null }; }
+/** dateOn = 경기일(date)을 정한 '그날'. 날이 바뀌면 경기일은 자동으로 오늘로 돌아감 */
+function freshEntry() { const b = setsToWin(), t = todayStr(); return { h: b, w: b, date: t, dateOn: t, memo: '', ver: 0, dirty: false, saved: null }; }
 function saveEntry() { store.set(K.entry, entry); }
 function persistRecords() { store.set(K.records, records); }
+/**
+ * 경기일 자동 보정 — 앱을 열 때 / 화면이 다시 켜질 때 / 자정이 지날 때 호출
+ *  - 경기일을 정한 날(dateOn)이 오늘이 아니면 → 경기일을 오늘로 교체
+ *  - 오늘 직접 '어제' 등으로 바꾼 경우에는 오늘 하루 동안만 유지
+ * @returns {boolean} 경기일이 바뀌었으면 true
+ */
+function ensureEntryDate() {
+  const t = todayStr();
+  if (entry.dateOn === t && /^\d{4}-\d{2}-\d{2}$/.test(String(entry.date)) && entry.date <= t) return false;
+  const changed = entry.date !== t;
+  entry.date = t; entry.dateOn = t; saveEntry();
+  return changed;
+}
+/** 사용자가 경기일을 직접 지정 */
+function setEntryDate(d) { entry.date = d || todayStr(); entry.dateOn = todayStr(); touchEntry(); renderEntry(); }
 
 /* 표시 순서 / 이름 / 캐릭터 */
 const order = () => settings.wifeLeft ? ['wife', 'husband'] : ['husband', 'wife'];
@@ -627,7 +645,11 @@ function applyRemoteLive(live) {
   const nh = clamp(Math.round(num(live.h, S)), 0, S), nw = clamp(Math.round(num(live.w, S)), 0, S);
   const changedWho = nh !== entry.h ? 'husband' : nw !== entry.w ? 'wife' : null;
   entry.h = nh; entry.w = nw;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(String(live.date))) entry.date = live.date;
+  // 경기일: 서버 상태가 '오늘' 기록된 것일 때만 상대 폰 날짜를 따름 (전날 남은 날짜는 무시 → 오늘)
+  const t = todayStr();
+  const liveDay = live.at ? normDate(live.at) : '';
+  entry.date = (liveDay === t && /^\d{4}-\d{2}-\d{2}$/.test(String(live.date)) && live.date <= t) ? live.date : t;
+  entry.dateOn = t;
   if (document.activeElement !== $('#eMemo')) entry.memo = String(live.memo || '');
   entry.saved = live.saved || null;
   entry.ver = num(live.ver);
@@ -956,6 +978,7 @@ function openRecordModal(rec, defaults = {}) {
  * 9. 경기 결과 입력 — 최종 세트 스코어만 기록
  *    (경기 방식: 10세트 선승, 최대 19세트 / 세트별 점수는 실물 스코어보드 사용)
  *    ※ 진행 중 스코어는 두 폰이 실시간 공유 (4-1 참조)
+ *    ※ 경기일은 항상 '오늘'로 자동 표기 (직접 바꾼 날짜는 그날 저장 전까지만 유지)
  * ===================================================================== */
 function entryState(e = entry) {
   const S = setsToWin();
@@ -965,7 +988,12 @@ function entryState(e = entry) {
 }
 function renderEntry(changed, remote = false) {
   const e = entry, S = setsToWin();
-  $('#eDate').value = e.date || todayStr();
+  const t = todayStr();
+  $('#eDate').value = e.date || t;
+  $('#eDate').max = t;
+  const note = $('#eDateNote');
+  if (e.date && e.date !== t) { note.hidden = false; note.textContent = `⚠️ 오늘이 아닌 ${fmtDateK(e.date)} 경기로 저장됩니다`; }
+  else note.hidden = true;
   const st = entryState();
   $('#eBoard').innerHTML = order().map(w => `
     <div class="panel ${w === 'husband' ? 'panel-h' : 'panel-w'} ${st.winner === w ? (w === 'husband' ? 'win-h' : 'win-w') : ''}" data-panel="${w}">
@@ -1006,6 +1034,7 @@ function openPicker(who) {
   $$('[data-n]', m.body).forEach(b => b.onclick = () => { m.close(); setScore(who, +b.dataset.n); });
 }
 async function saveMatch() {
+  checkDayRollover();                                       // 자정을 넘겨 화면을 켜 둔 경우 대비
   const e = entry, S = setsToWin(), st = entryState();
   if (st.kind === 'tie') { toast('동점은 저장할 수 없습니다', 'warn'); return; }
   if (st.kind === 'partial' && !await askConfirm(`아직 ${S}세트 선승 전입니다 (${pairTxt(e)}).\n미완료 경기로 저장할까요?`, { ok: '저장' })) return;
@@ -1014,9 +1043,9 @@ async function saveMatch() {
     husband_sets: e.h, wife_sets: e.w, score_detail: '', duration_min: '', calories: '',
     memo: ($('#eMemo').value || '').trim()
   });
-  // 입력판 초기화 + 상대 폰에도 초기화·저장 사실 전파 (중복 저장 방지)
+  // 입력판 초기화 (경기일은 다시 '오늘') + 상대 폰에도 초기화·저장 사실 전파 (중복 저장 방지)
   const ver = entry.ver;
-  entry = freshEntry(e.date); entry.ver = ver; entry.saved = { id: rec.id, at: Date.now() };
+  entry = freshEntry(); entry.ver = ver; entry.saved = { id: rec.id, at: Date.now() };
   store.set(K.seenSaved, rec.id);
   touchEntry(0); renderEntry();
   buzz(40);
@@ -1032,6 +1061,19 @@ async function saveMatch() {
     </div>`
   });
   $('[data-ok]', m.body).onclick = () => m.close();
+}
+
+/* =====================================================================
+ * 10. 날짜 변경 감지 (앱을 켜 둔 채 자정이 지나거나, 다음 날 다시 열었을 때)
+ * ===================================================================== */
+function checkDayRollover() {
+  const t = todayStr();
+  if (ensureEntryDate()) { touchEntry(); renderEntry(); }
+  if (t !== shownDay) {
+    shownDay = t;
+    const d = new Date(); calMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+    renderEntry(); renderAll();
+  }
 }
 
 /* =====================================================================
@@ -1408,9 +1450,9 @@ function bind() {
   });
   $('#eReset').onclick = () => { entry.h = setsToWin(); entry.w = setsToWin(); touchEntry(); renderEntry(); };
   $('#eSave').onclick = saveMatch;
-  $('#eDate').onchange = e => { entry.date = e.target.value || todayStr(); touchEntry(); };
-  $('#eToday').onclick = () => { entry.date = todayStr(); touchEntry(); renderEntry(); };
-  $('#eYest').onclick = () => { const d = new Date(); d.setDate(d.getDate() - 1); entry.date = ymd(d); touchEntry(); renderEntry(); };
+  $('#eDate').onchange = e => setEntryDate(e.target.value);
+  $('#eToday').onclick = () => setEntryDate(todayStr());
+  $('#eYest').onclick = () => { const d = new Date(); d.setDate(d.getDate() - 1); setEntryDate(ymd(d)); };
   $('#eMemo').oninput = e => { entry.memo = e.target.value; touchEntry(800); };
 
   // 통계
@@ -1448,9 +1490,10 @@ function bind() {
   };
   window.addEventListener('appinstalled', () => { $('#btnInstall').hidden = true; toast('홈 화면에 설치되었습니다', 'ok'); });
 
-  // 화면이 켜지면 즉시 조회 재개, 꺼지면 조회 중단 (배터리·할당량 절약)
+  // 화면이 켜지면 날짜 확인 + 즉시 조회 재개, 꺼지면 조회 중단 (배터리·할당량 절약)
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
+      checkDayRollover();
       if (!api.enabled()) return;
       if (Date.now() - store.get(K.lastSync, 0) > 60000) refreshFromServer(true);   // 시트 직접 수정분 등 안전 재조회
       schedulePoll(0);
@@ -1459,7 +1502,9 @@ function bind() {
       if (entry.dirty) pushLive();
     }
   });
-  window.addEventListener('pageshow', e => { if (e.persisted && api.enabled()) schedulePoll(0); });
+  window.addEventListener('pageshow', e => { checkDayRollover(); if (e.persisted && api.enabled()) schedulePoll(0); });
+  window.addEventListener('focus', checkDayRollover);
+  setInterval(() => { if (document.visibilityState === 'visible') checkDayRollover(); }, 60000);   // 켜 둔 채 자정 경과
   window.addEventListener('online', () => { flushQueue(); schedulePoll(0); });
 }
 
@@ -1472,11 +1517,13 @@ function init() {
   if (Array.isArray(saved)) { records = normList(saved); if (records.length !== saved.length) persistRecords(); }
   else if (!settings.gasUrl && !/(^#|&)gas=/.test(location.hash)) { records = makeSample(); store.set(K.sample, true); persistRecords(); }   // 최초 실행: 샘플 모드
   saveSettings();
-  if (!entry || entry.sets || !(entry.h >= 0) || entry.h > setsToWin() || entry.w > setsToWin()) entry = freshEntry(entry?.date);
+  if (!entry || entry.sets || !(entry.h >= 0) || entry.h > setsToWin() || entry.w > setsToWin()) entry = freshEntry();
   delete entry.duration;
   if (!Number.isFinite(entry.ver)) entry.ver = 0;
+  const dateFixed = ensureEntryDate();             // 앱을 열 때마다 경기일 = 오늘 (전날 값 잔존 방지)
   saveEntry();
   bind(); renderEntry(); renderAll();
+  if (dateFixed) touchEntry();                     // 상대 폰에도 오늘 날짜 전파
   (async () => {
     const linked = await applyConnectLink();
     if (!api.enabled() || linked) return;          // connectGas가 조회 시작

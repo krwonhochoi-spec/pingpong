@@ -1,5 +1,5 @@
 /* 암사동 탁구사랑 클럽 — 서비스 워커 (오프라인 실행 / 홈 화면 앱) */
-const CACHE = 'pp-cache-v8';
+const CACHE = 'pp-cache-v9';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png?v=4', './icon-512.png?v=4'];
 const CDN = /(^|\.)cdn\.tailwindcss\.com$|(^|\.)cdn\.jsdelivr\.net$/;
 
