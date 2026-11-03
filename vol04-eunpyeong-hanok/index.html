@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="icon" href="../favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+<meta name="theme-color" content="#b8475f">
+<meta name="apple-mobile-web-app-title" content="여행기 은평">
+<meta name="application-name" content="여행기 은평">
+<title>부부 여행기 Vol.04 은평역사한옥박물관</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light;
+--bg:#ecf0f2;--paper:#fcfdfd;--ink:#1f272b;--sub:#5b676d;--accent:#3b6378;--line:#d0d9dd;--gold:#8a5a2b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12171a;--paper:#1c2327;--ink:#e3eaed;--sub:#9aa8ae;--accent:#86b3cb;--line:#2f393e;--gold:#d29a63;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12171a;--paper:#1c2327;--ink:#e3eaed;--sub:#9aa8ae;--accent:#86b3cb;--line:#2f393e;--gold:#d29a63;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+img{max-width:100%}
+.back{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:max(12px,env(safe-area-inset-left,0px));z-index:3;min-height:40px;display:inline-flex;align-items:center;padding:0 14px;border-radius:99px;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font-size:14px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.hero{position:relative;min-height:clamp(420px,62vh,640px);display:flex;align-items:flex-end;color:#fff;background:#222 center/cover no-repeat;background-image:linear-gradient(180deg,rgba(0,0,0,.05) 30%,rgba(0,0,0,.72)),url("img/20260725_150438.jpg");background-position:45% 55%}
+.hero .in{max-width:1080px;margin:0 auto;padding-block:48px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));width:100%}
+.hero .tag{display:inline-block;border:1px solid rgba(255,255,255,.6);padding:3px 12px;border-radius:99px;font-size:13px;letter-spacing:.04em}
+.hero h1{font-size:clamp(34px,7vw,64px);line-height:1.15;margin:14px 0 10px;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+.hero p{margin:0;font-size:clamp(15px,2.2vw,18px);opacity:.92}
+.route{max-width:1080px;margin:-34px auto 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));position:relative;z-index:2}
+.route ol{list-style:none;margin:0;padding:16px;background:var(--paper);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.12);display:flex;flex-wrap:wrap;gap:6px 4px;font-size:14px}
+.route li{display:flex;align-items:center;gap:4px}.route li:not(:last-child)::after{content:"→";color:var(--accent);margin-left:4px}
+.route b{color:var(--accent);font-variant-numeric:tabular-nums}
+main{max-width:1080px;margin:0 auto;padding-block:40px 20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));position:relative}
+main::before{content:"";position:absolute;left:31px;top:40px;bottom:0;width:2px;background:var(--line)}
+.ch{position:relative;padding-left:44px;margin-bottom:56px}
+.dot{position:absolute;left:8px;top:10px;width:16px;height:16px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 5px var(--bg)}
+.ch header{display:flex;gap:14px;align-items:flex-start}
+.ch header>div{min-width:0}
+.no{font-size:40px;font-weight:800;color:var(--gold);line-height:1;font-variant-numeric:tabular-nums}
+.time{margin:0;color:var(--sub);font-size:13px}
+h2{margin:2px 0 0;font-size:clamp(21px,3.4vw,28px);letter-spacing:-.01em;text-wrap:balance}
+.intro{color:var(--sub);margin:12px 0 18px;max-width:720px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+.card{margin:0;background:var(--paper);border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.07)}
+.card.wide{grid-column:1/-1}
+.ph{position:relative;background:#000}
+.ph img{display:block;width:100%;height:240px;object-fit:cover;cursor:zoom-in}
+.wide .ph img{height:min(56vw,520px)}
+.ts{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.6);color:#fff;font-size:12px;padding:2px 9px;border-radius:99px;font-variant-numeric:tabular-nums;pointer-events:none}
+figcaption{padding:12px 15px 15px;font-size:15px}
+footer{text-align:center;color:var(--sub);font-size:13px;padding-block:10px 50px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+footer a{color:var(--gold);font-weight:700}
+.next{display:inline-block;margin-top:8px;color:var(--gold);font-weight:700}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;z-index:9;cursor:zoom-out;padding:16px;touch-action:pinch-zoom}#lb.on{display:flex}#lb img{max-width:100%;max-height:100%;border-radius:6px}
+#lb .x{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:max(12px,env(safe-area-inset-right,0px));width:48px;height:48px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:24px;line-height:1;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media (max-width:640px){main::before{left:23px}.ch{padding-left:34px}.dot{left:0}.no{font-size:30px}.ph img{height:auto;max-height:420px}}
+</style>
+<style id="font-up">
+/* 폰트 2단계 확대 (약 1.25배) */
+body{font-size:17.5px}
+.back{font-size:17px}
+.hero .tag{font-size:16px}
+.hero h1{font-size:clamp(40px,8.5vw,78px)}
+.hero p{font-size:clamp(18px,2.7vw,22px)}
+.route ol{font-size:17px}
+.no{font-size:48px}
+.time{font-size:16px}
+h2{font-size:clamp(25px,4.2vw,34px)}
+.ts{font-size:14px}
+figcaption{font-size:19px}
+footer{font-size:16px}
+@media (max-width:640px){.no{font-size:36px}}
+</style>
+</head>
+<body>
+<a class="back" href="../">부부 여행기 목록</a>
+<section class="hero"><div class="in">
+<span class="tag">2026.07.25 (토) · 은평한옥마을 반나절</span>
+<h1>기와지붕 너머<br>북한산이 한눈에</h1>
+<p>박물관 옥상 → 한옥 창호 전시실 → 미디어아트 카페 · 사진 4장 (원본 4장 전부)</p>
+</div></section>
+<nav class="route" aria-label="이동 경로"><ol><li><b>15:04</b>&nbsp;박물관 옥상</li><li><b>15:08</b>&nbsp;창호 전시실</li><li><b>16:48</b>&nbsp;미디어아트 카페</li><li><b>이후</b>&nbsp;귀가</li></ol></nav>
+<main><section class="ch"><div class="dot"></div>
+<header><span class="no">01</span><div><p class="time">15:04 – 15:05 · 은평역사한옥박물관 옥상</p><h2>옥상 전망대 — 배경이 다 했음</h2></div></header>
+<p class="intro">흐린 여름 오후, 은평한옥마을의 은평역사한옥박물관. 옥상에 오르면 한옥 지붕들 뒤로 북한산 바위 능선이 병풍처럼 펼쳐짐.</p><div class="grid"><figure class="card wide"><div class="ph"><img loading="lazy" src="img/20260725_150438.jpg" alt="북한산을 배경으로 브이 포즈를 한 부부" style="object-position:45% 62%"><span class="ts">15:04</span></div><figcaption>북한산 앞 브이 3종 세트: 남편 브이, 아내 브이, 산봉우리 브이. 크기 대결은 산의 압승.</figcaption></figure><figure class="card"><div class="ph"><img loading="lazy" src="img/20260725_150504.jpg" alt="북한산 능선 앞 부부 투샷" style="object-position:45% 58%"><span class="ts">15:05</span></div><figcaption>26초 만에 재촬영. 줄무늬 셔츠와 북한산 능선이 ‘누가 더 선명한가’ 대결 중.</figcaption></figure></div></section><section class="ch"><div class="dot"></div>
+<header><span class="no">02</span><div><p class="time">15:08 · 은평역사한옥박물관 전시실</p><h2>창호 전시실 — 문살 앞 등 맞대기</h2></div></header>
+<p class="intro">옥상에서 내려와 실내 전시실로. 격자·빗살 무늬 창호가 벽 한 면을 채운 공간에 긴 나무 평상이 놓여 있음.</p><div class="grid"><figure class="card wide"><div class="ph"><img loading="lazy" src="img/20260725_150835.jpg" alt="한옥 창호 앞 나무 평상에 등을 맞대고 앉은 부부" style="object-position:42% 62%"><span class="ts">15:08</span></div><figcaption>창호 앞 등 맞대기 화보. 아내는 ‘조선 규수’ 정자세, 남편은 ‘퇴청한 대감’ 다리 쭉.</figcaption></figure></div></section><section class="ch"><div class="dot"></div>
+<header><span class="no">03</span><div><p class="time">16:48 · 미디어아트 카페 (장소명 기록 없음)</p><h2>미디어아트 카페 — 명화 속에서 디저트</h2></div></header>
+<p class="intro">관람을 마치고 카페에서 쉬어 감. 벽과 천장 전체에 인상파 그림 같은 영상이 흐르는 공간.</p><div class="grid"><figure class="card wide"><div class="ph"><img loading="lazy" src="img/20260725_164831.jpg" alt="미디어아트 영상이 흐르는 카페에서 일행과 앉은 아내" style="object-position:55% 50%"><span class="ts">16:48</span></div><figcaption>고흐 그림 속에 들어온 줄 알았는데 접시는 이미 텅 빔. 명화는 천천히 감상, 디저트는 광속 감상.</figcaption></figure></div></section><section class="ch"><div class="dot"></div>
+<header><span class="no">04</span><div><p class="time">17:00 이후 · 은평 → 집</p><h2>귀가 — 산·한옥·명화 3종 세트</h2></div></header>
+<p class="intro">북한산 풍경, 창호 전시실, 미디어아트 카페까지 반나절에 알차게 담음. 옥상 사진 2장은 비슷한 구도였지만 포즈가 달라 4장 모두 실음.</p></section></main>
+<footer>사진 시각은 파일명·촬영정보 기준 · 카페 상호는 기록이 없어 표기하지 않음<br>
+<span class="next">Vol.04 은평역사한옥박물관 → Vol.05 다음 여행</span><br>
+<a href="../">부부 여행기 목록으로</a></footer>
+<div id="lb" role="dialog" aria-modal="true" aria-label="사진 크게 보기"><button type="button" class="x" aria-label="닫기">✕</button><img alt=""></div>
+<script>
+/* 사진 확대: 열 때 기록 1칸 추가 → 뒤로가기는 사진만 닫고 같은 위치에 머묾 */
+(()=>{const lb=document.getElementById('lb'),li=lb.querySelector('img');let pushed=false;
+const hide=()=>{lb.classList.remove('on');li.removeAttribute('src');document.documentElement.style.overflow=''};
+const show=i=>{li.src=i.currentSrc||i.src;li.alt=i.alt;lb.classList.add('on');document.documentElement.style.overflow='hidden';
+ try{history.pushState({lb:1},'');pushed=true}catch(e){pushed=false}};
+const close=()=>{if(!lb.classList.contains('on'))return;if(pushed){pushed=false;try{history.back();return}catch(e){}}hide()};
+try{if(history.state&&history.state.lb)history.replaceState(null,'')}catch(e){}
+document.querySelectorAll('.ph img,.gal img').forEach(i=>i.addEventListener('click',()=>show(i)));
+lb.addEventListener('click',close);
+addEventListener('popstate',()=>{pushed=false;hide()});
+addEventListener('pageshow',()=>{if(lb.classList.contains('on'))hide()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});})();
+</script>
+</body>
+</html>

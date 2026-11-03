@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="icon" href="../favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+<meta name="theme-color" content="#b8475f">
+<meta name="apple-mobile-web-app-title" content="여행기 안동">
+<meta name="application-name" content="여행기 안동">
+<title>부부 여행기 Vol.01 안동</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light;
+--bg:#f3eee6;--paper:#fffdf9;--ink:#2b2420;--sub:#6e6259;--accent:#b4502c;--line:#ddd2c4;--gold:#2f5079}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1a1613;--paper:#25201c;--ink:#efe7de;--sub:#ad9f93;--accent:#e58a63;--line:#3d342d;--gold:#8fb0db;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1a1613;--paper:#25201c;--ink:#efe7de;--sub:#ad9f93;--accent:#e58a63;--line:#3d342d;--gold:#8fb0db;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+img{max-width:100%}
+.back{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:max(12px,env(safe-area-inset-left,0px));z-index:3;min-height:40px;display:inline-flex;align-items:center;padding:0 14px;border-radius:99px;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font-size:14px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.hero{position:relative;min-height:clamp(420px,62vh,640px);display:flex;align-items:flex-end;color:#fff;background:#222 center/cover no-repeat;background-image:linear-gradient(180deg,rgba(0,0,0,.05) 30%,rgba(0,0,0,.72)),url("img/20261004_135641.jpg");background-position:50% 40%}
+.hero .in{max-width:1080px;margin:0 auto;padding-block:48px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));width:100%}
+.hero .tag{display:inline-block;border:1px solid rgba(255,255,255,.6);padding:3px 12px;border-radius:99px;font-size:13px;letter-spacing:.04em}
+.hero h1{font-size:clamp(34px,7vw,64px);line-height:1.15;margin:14px 0 10px;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+.hero p{margin:0;font-size:clamp(15px,2.2vw,18px);opacity:.92}
+.route{max-width:1080px;margin:-34px auto 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));position:relative;z-index:2}
+.route ol{list-style:none;margin:0;padding:16px;background:var(--paper);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.12);display:flex;flex-wrap:wrap;gap:6px 4px;font-size:14px}
+.route li{display:flex;align-items:center;gap:4px}.route li:not(:last-child)::after{content:"→";color:var(--accent);margin-left:4px}
+.route b{color:var(--accent);font-variant-numeric:tabular-nums}
+main{max-width:1080px;margin:0 auto;padding-block:40px 20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));position:relative}
+main::before{content:"";position:absolute;left:31px;top:40px;bottom:0;width:2px;background:var(--line)}
+.ch{position:relative;padding-left:44px;margin-bottom:56px}
+.dot{position:absolute;left:8px;top:10px;width:16px;height:16px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 5px var(--bg)}
+.ch header{display:flex;gap:14px;align-items:flex-start}
+.ch header>div{min-width:0}
+.no{font-size:40px;font-weight:800;color:var(--gold);line-height:1;font-variant-numeric:tabular-nums}
+.time{margin:0;color:var(--sub);font-size:13px}
+h2{margin:2px 0 0;font-size:clamp(21px,3.4vw,28px);letter-spacing:-.01em;text-wrap:balance}
+.intro{color:var(--sub);margin:12px 0 18px;max-width:720px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+.card{margin:0;background:var(--paper);border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.07)}
+.card.wide{grid-column:1/-1}
+.ph{position:relative;background:#000}
+.ph img{display:block;width:100%;height:240px;object-fit:cover;cursor:zoom-in}
+.wide .ph img{height:min(56vw,520px)}
+.gal{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:3px;background:#000}
+.gal img{display:block;width:100%;height:180px;object-fit:cover;cursor:zoom-in}
+.ts{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.6);color:#fff;font-size:12px;padding:2px 9px;border-radius:99px;font-variant-numeric:tabular-nums;pointer-events:none}
+figcaption{padding:12px 15px 15px;font-size:15px}
+footer{text-align:center;color:var(--sub);font-size:13px;padding-block:10px 50px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+footer a{color:var(--gold);font-weight:700}
+.next{display:inline-block;margin-top:8px;color:var(--gold);font-weight:700}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;z-index:9;cursor:zoom-out;padding:16px;touch-action:pinch-zoom}#lb.on{display:flex}#lb img{max-width:100%;max-height:100%;border-radius:6px}
+#lb .x{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:max(12px,env(safe-area-inset-right,0px));width:48px;height:48px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:24px;line-height:1;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media (max-width:640px){main::before{left:23px}.ch{padding-left:34px}.dot{left:0}.no{font-size:30px}.gal{grid-template-columns:repeat(3,1fr)}.gal img{height:110px}.ph img{height:auto;max-height:420px}}
+</style>
+<style id="font-up">
+/* 폰트 2단계 확대 (약 1.25배) */
+body{font-size:17.5px}
+.back{font-size:17px}
+.hero .tag{font-size:16px}
+.hero h1{font-size:clamp(40px,8.5vw,78px)}
+.hero p{font-size:clamp(18px,2.7vw,22px)}
+.route ol{font-size:17px}
+.no{font-size:48px}
+.time{font-size:16px}
+h2{font-size:clamp(25px,4.2vw,34px)}
+.ts{font-size:14px}
+figcaption{font-size:19px}
+footer{font-size:16px}
+@media (max-width:640px){.no{font-size:36px}}
+</style>
+</head>
+<body>
+<a class="back" href="../">부부 여행기 목록</a>
+<section class="hero"><div class="in">
+<span class="tag">2026.10.04 (일) · 친구 부부와 넷이서 · 부부 여행 1번째</span>
+<h1>달빛 다리 건너<br>탈 앞에서 웃은 하루</h1>
+<p>월영교 → 안동 찜닭 → 탈춤페스티벌 → 하회마을 · 사진 10장 (원본 11장 중 엄선)</p>
+</div></section>
+<nav class="route" aria-label="이동 경로"><ol><li><b>10:40</b>&nbsp;월영교</li><li><b>11:47</b>&nbsp;찜닭 점심</li><li><b>13:19</b>&nbsp;탈춤페스티벌</li><li><b>16:29</b>&nbsp;하회마을</li><li><b>17:00</b>&nbsp;귀가</li></ol></nav>
+<main><section class="ch"><div class="dot"></div>
+<header><span class="no">01</span><div><p class="time">10:40 – 10:43 · 월영교 · 월영정</p><h2>월영교 — 넷이 한 화면에</h2></div></header>
+<p class="intro">흐린 오전, 안동댐 아래 월영교에서 하루를 시작함. 친구 부부와 넷이서 나무다리를 건너 강 한가운데 정자 월영정까지 걸음.</p><div class="grid"><figure class="card wide"><div class="ph"><img loading="lazy" src="img/20261004_104005.jpg" alt="월영교 위에서 넷이 찍은 셀카" style="object-position:50% 55%"><span class="ts">10:40</span></div><figcaption>팔 길이 70cm로 4인 단체사진 완성. 셀카봉 회사가 제일 싫어할 사진임. 오른쪽 브이는 화면 탈출 직전 극적으로 구조됨.</figcaption></figure><figure class="card"><div class="ph"><img loading="lazy" src="img/20261004_104326.jpg" alt="월영정 정자 안 부부 대칭 포즈" style="object-position:50% 60%"><span class="ts">10:43</span></div><figcaption>월영정 창틀 액자 속 ‘여기서부터 저기까지 다 우리 땅’ 포즈. 강 건너 땅 주인들이 보면 곤란한 사진.</figcaption></figure></div></section><section class="ch"><div class="dot"></div>
+<header><span class="no">02</span><div><p class="time">11:47 · 안동 시내 (구시장 찜닭골목 일대, GPS 기준 추정)</p><h2>점심 — 안동에 왔으면 찜닭부터</h2></div></header>
+<p class="intro">월영교에서 시내로 이동해 점심. 안동 일정의 필수 코스.</p><div class="grid"><figure class="card"><div class="ph"><img loading="lazy" src="img/1791603178255.jpg" alt="안동 찜닭 한 접시" style="object-position:50% 55%"><span class="ts">11:47</span></div><figcaption>다이어트는 내일부터라는 약속, 오늘도 성실히 지킴. 당면 한 가닥이라도 남기면 안동을 못 빠져나간다는 소문이 있음.</figcaption></figure></div></section><section class="ch"><div class="dot"></div>
+<header><span class="no">03</span><div><p class="time">13:19 – 13:56 · 안동국제탈춤페스티벌</p><h2>탈춤페스티벌 — 탈보다 큰 웃음</h2></div></header>
+<p class="intro">축제장은 거대한 탈 조형물이 곳곳에 서 있는 포토존 천국. 햇볕이 나면서 겉옷을 벗고 가벼운 차림으로 바뀜.</p><div class="grid"><figure class="card wide"><div class="ph"><img loading="lazy" src="img/20261004_135641.jpg" alt="탈춤페스티벌 정문 포토존 단체 사진" style="object-position:50% 60%"><span class="ts">13:56</span></div><figcaption>양쪽에서 대형 탈 두 개가 째려보는 중. 표정 연기 대결 결과, 사람 팀 판정승.</figcaption></figure><figure class="card"><div class="ph"><img loading="lazy" src="img/20261004_131940.jpg" alt="대형 탈 조형물 앞 단체 사진" style="object-position:45% 50%"><span class="ts">13:19</span></div><figcaption>뒤에 계신 탈 아저씨 속마음: ‘나보다 크게 웃으면 반칙인데…’. 오른쪽 브이는 오늘만 벌써 세 번째 출연.</figcaption></figure></div></section><section class="ch"><div class="dot"></div>
+<header><span class="no">04</span><div><p class="time">16:29 – 16:51 · 하회마을</p><h2>하회마을 — 흙담 골목과 600살 느티나무</h2></div></header>
+<p class="intro">오후 햇살이 비스듬히 들 때 하회마을에 도착. 흙담 골목을 지나 마을 한가운데 삼신당 느티나무까지 걸음.</p><div class="grid"><figure class="card wide"><div class="ph"><img loading="lazy" src="img/20261004_162902.jpg" alt="하회마을 흙담 골목" style="object-position:48% 50%"><span class="ts">16:29</span></div><figcaption>하회마을 흙담 런웨이. 관객은 기와 위 이끼 몇 포기뿐이지만 워킹만큼은 파리 컬렉션급.</figcaption></figure><figure class="card"><div class="ph"><img loading="lazy" src="img/20261004_163318.jpg" alt="삼신당 느티나무 앞 단체 사진" style="object-position:38% 50%"><span class="ts">16:33</span></div><figcaption>600살 느티나무 앞 단체샷. 나무 입장에선 오늘 온 관광객 3만 명 중 4명, 우리 입장에선 인생샷 1장.</figcaption></figure><figure class="card"><div class="ph"><img loading="lazy" src="img/20261004_163207.jpg" alt="삼신당 느티나무 앞 부부 셀카" style="object-position:55% 45%"><span class="ts">16:32</span></div><figcaption>느티나무가 600년 버틴 비결은 ‘옆에서 잔소리 안 듣기’라는 설이 있음. 우리는 그 장수 비결을 진작에 포기함.</figcaption></figure><figure class="card"><div class="ph"><img loading="lazy" src="img/20261004_165052.jpg" alt="하회마을 고택 앞 부부" style="object-position:62% 50%"><span class="ts">16:50</span></div><figcaption>고택 마루 앞 투샷. 콘셉트는 ‘외출 나온 양반집 도령과 그 도령 찾으러 나온 마님’.</figcaption></figure><figure class="card"><div class="ph"><img loading="lazy" src="img/20261004_165130.jpg" alt="삼양태회 글씨가 붙은 대문 앞 부부" style="object-position:42% 55%"><span class="ts">16:51</span></div><figcaption>대문에 붙은 三陽泰回(삼양태회) — 좋은 기운이 돌아온다는 뜻. 점심 찜닭 기운도 아직 안 빠지고 돌고 있음.</figcaption></figure></div></section><section class="ch"><div class="dot"></div>
+<header><span class="no">05</span><div><p class="time">17:00 이후 · 하회마을 → 집</p><h2>귀가 — 다음 여행은 어디로?</h2></div></header>
+<p class="intro">오전 월영교, 점심 찜닭, 오후 탈춤과 하회마을까지 안동 핵심만 하루에 꾹꾹 눌러 담음. 같은 장면이 겹친 월영정 사진 1장은 빼고 10장을 남김. 다음 편은 3주 뒤 영월.</p></section></main>
+<footer>사진 시각은 파일명·촬영정보 기준 · 폴더명은 10.03이나 사진은 모두 10.04 촬영<br>
+<span class="next">Vol.01 안동 → <a href="../vol02-yeongwol/">Vol.02 영월</a></span><br>
+<a href="../">부부 여행기 목록으로</a></footer>
+<div id="lb" role="dialog" aria-modal="true" aria-label="사진 크게 보기"><button type="button" class="x" aria-label="닫기">✕</button><img alt=""></div>
+<script>
+/* 사진 확대: 열 때 기록 1칸 추가 → 뒤로가기는 사진만 닫고 같은 위치에 머묾 */
+(()=>{const lb=document.getElementById('lb'),li=lb.querySelector('img');let pushed=false;
+const hide=()=>{lb.classList.remove('on');li.removeAttribute('src');document.documentElement.style.overflow=''};
+const show=i=>{li.src=i.currentSrc||i.src;li.alt=i.alt;lb.classList.add('on');document.documentElement.style.overflow='hidden';
+ try{history.pushState({lb:1},'');pushed=true}catch(e){pushed=false}};
+const close=()=>{if(!lb.classList.contains('on'))return;if(pushed){pushed=false;try{history.back();return}catch(e){}}hide()};
+try{if(history.state&&history.state.lb)history.replaceState(null,'')}catch(e){}
+document.querySelectorAll('.ph img,.gal img').forEach(i=>i.addEventListener('click',()=>show(i)));
+lb.addEventListener('click',close);
+addEventListener('popstate',()=>{pushed=false;hide()});
+addEventListener('pageshow',()=>{if(lb.classList.contains('on'))hide()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});})();
+</script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="icon" href="../favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+<meta name="theme-color" content="#b8475f">
+<meta name="apple-mobile-web-app-title" content="여행기 영월">
+<meta name="application-name" content="여행기 영월">
+<title>부부 여행기 Vol.02 영월</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light;
+--bg:#eef0e8;--paper:#fdfdf9;--ink:#232821;--sub:#5f675b;--accent:#2f6a4c;--line:#d3d9cb;--gold:#a8741c}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141814;--paper:#1f241e;--ink:#e6ebe2;--sub:#9fa898;--accent:#7cc39c;--line:#333b31;--gold:#e0b25e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141814;--paper:#1f241e;--ink:#e6ebe2;--sub:#9fa898;--accent:#7cc39c;--line:#333b31;--gold:#e0b25e;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+img{max-width:100%}
+.back{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:max(12px,env(safe-area-inset-left,0px));z-index:3;min-height:40px;display:inline-flex;align-items:center;padding:0 14px;border-radius:99px;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font-size:14px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.hero{position:relative;min-height:clamp(420px,62vh,640px);display:flex;align-items:flex-end;color:#fff;background:#222 center/cover no-repeat;background-image:linear-gradient(180deg,rgba(0,0,0,.05) 30%,rgba(0,0,0,.72)),url("img/20261025_124551.jpg");background-position:50% 35%}
+.hero .in{max-width:1080px;margin:0 auto;padding-block:48px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));width:100%}
+.hero .tag{display:inline-block;border:1px solid rgba(255,255,255,.6);padding:3px 12px;border-radius:99px;font-size:13px;letter-spacing:.04em}
+.hero h1{font-size:clamp(34px,7vw,64px);line-height:1.15;margin:14px 0 10px;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+.hero p{margin:0;font-size:clamp(15px,2.2vw,18px);opacity:.92}
+.route{max-width:1080px;margin:-34px auto 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));position:relative;z-index:2}
+.route ol{list-style:none;margin:0;padding:16px;background:var(--paper);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.12);display:flex;flex-wrap:wrap;gap:6px 4px;font-size:14px}
+.route li{display:flex;align-items:center;gap:4px}.route li:not(:last-child)::after{content:"→";color:var(--accent);margin-left:4px}
+.route b{color:var(--accent);font-variant-numeric:tabular-nums}
+main{max-width:1080px;margin:0 auto;padding-block:40px 20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));position:relative}
+main::before{content:"";position:absolute;left:31px;top:40px;bottom:0;width:2px;background:var(--line)}
+.ch{position:relative;padding-left:44px;margin-bottom:56px}
+.dot{position:absolute;left:8px;top:10px;width:16px;height:16px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 5px var(--bg)}
+.ch header{display:flex;gap:14px;align-items:flex-start}
+.ch header>div{min-width:0}
+.no{font-size:40px;font-weight:800;color:var(--gold);line-height:1;font-variant-numeric:tabular-nums}
+.time{margin:0;color:var(--sub);font-size:13px}
+h2{margin:2px 0 0;font-size:clamp(21px,3.4vw,28px);letter-spacing:-.01em;text-wrap:balance}
+.intro{color:var(--sub);margin:12px 0 18px;max-width:720px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+.card{margin:0;background:var(--paper);border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.07)}
+.card.wide{grid-column:1/-1}
+.ph{position:relative;background:#000}
+.ph img{display:block;width:100%;height:240px;object-fit:cover;cursor:zoom-in}
+.wide .ph img{height:min(56vw,520px)}
+.gal{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:3px;background:#000}
+.gal img{display:block;width:100%;height:180px;object-fit:cover;cursor:zoom-in}
+.ts{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.6);color:#fff;font-size:12px;padding:2px 9px;border-radius:99px;font-variant-numeric:tabular-nums;pointer-events:none}
+figcaption{padding:12px 15px 15px;font-size:15px}
+footer{text-align:center;color:var(--sub);font-size:13px;padding-block:10px 50px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+footer a{color:var(--gold);font-weight:700}
+.next{display:inline-block;margin-top:8px;color:var(--gold);font-weight:700}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;z-index:9;cursor:zoom-out;padding:16px;touch-action:pinch-zoom}#lb.on{display:flex}#lb img{max-width:100%;max-height:100%;border-radius:6px}
+#lb .x{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:max(12px,env(safe-area-inset-right,0px));width:48px;height:48px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:24px;line-height:1;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media (max-width:640px){main::before{left:23px}.ch{padding-left:34px}.dot{left:0}.no{font-size:30px}.gal{grid-template-columns:repeat(3,1fr)}.gal img{height:110px}.ph img{height:auto;max-height:420px}}
+</style>
+<style id="font-up">
+/* 폰트 2단계 확대 (약 1.25배) */
+body{font-size:17.5px}
+.back{font-size:17px}
+.hero .tag{font-size:16px}
+.hero h1{font-size:clamp(40px,8.5vw,78px)}
+.hero p{font-size:clamp(18px,2.7vw,22px)}
+.route ol{font-size:17px}
+.no{font-size:48px}
+.time{font-size:16px}
+h2{font-size:clamp(25px,4.2vw,34px)}
+.ts{font-size:14px}
+figcaption{font-size:19px}
+footer{font-size:16px}
+@media (max-width:640px){.no{font-size:36px}}
+.gal.g4{grid-template-columns:repeat(4,1fr)}@media (max-width:640px){.gal.g4{grid-template-columns:repeat(2,1fr)}.gal.g4 img{height:150px}}
+</style>
+</head>
+<body>
+<a class="back" href="../">부부 여행기 목록</a>
+<section class="hero"><div class="in">
+<span class="tag">2026.10.25 (일) · 둘이서 · 부부 여행 2번째</span>
+<h1>단종의 길 따라<br>영월 가을 한 바퀴</h1>
+<p>장릉 → 관풍헌 → 청령포 → 점심 → 고씨굴 · 사진 19장 (원본 20장 중 엄선)</p>
+</div></section>
+<nav class="route" aria-label="이동 경로"><ol><li><b>09:56</b>&nbsp;장릉</li><li><b>10:32</b>&nbsp;관풍헌</li><li><b>11:45</b>&nbsp;청령포</li><li><b>12:45</b>&nbsp;청령포 나루</li><li><b>점심</b>&nbsp;산채 정식</li><li><b>14:49</b>&nbsp;고씨굴</li></ol></nav>
+<main><section class="ch"><div class="dot"></div>
+<header><span class="no">01</span><div><p class="time">09:56 – 10:09 · 장릉</p><h2>장릉 — 단종 임금께 먼저 인사</h2></div></header>
+<p class="intro">영월 첫 일정은 단종의 능, 장릉. 조선왕릉으로 세계유산에 올라 있는 곳임. 단풍이 막 들기 시작한 아침이라 마당이 반은 초록, 반은 빨강.</p><div class="grid"><figure class="card wide"><div class="ph"><img loading="lazy" src="img/20261025_095605.jpg" alt="장릉 재실 앞 부부" style="object-position:46% 55%"><span class="ts">09:56</span></div><figcaption>장릉 재실 앞 흙마당. 단풍은 아직 반만 물들었는데 어깨동무는 이미 만개.</figcaption></figure><figure class="card"><div class="ph"><img loading="lazy" src="img/20261025_095701.jpg" alt="단풍나무 아래 부부" style="object-position:62% 55%"><span class="ts">09:57</span></div><figcaption>남편 머리 위로 싸리비 왕관 등극. 장릉 공식 ‘오늘의 마당쇠’ 임명식 현장.</figcaption></figure><figure class="card"><div class="ph"><img loading="lazy" src="img/20261025_095735.jpg" alt="홍살문과 안내판 앞 부부" style="object-position:48% 55%"><span class="ts">09:57</span></div><figcaption>홍살문 앞 안내판까지 넣은 이유: 10년 뒤 ‘우리 여기 왔었나?’ 부부 분쟁 대비 증거 자료.</figcaption></figure><figure class="card"><div class="ph"><img loading="lazy" src="img/20261025_100910.jpg" alt="장릉 봉분 앞 셀카" style="object-position:45% 75%"><span class="ts">10:09</span></div><figcaption>단종 임금께 문안 셀카. 머리카락이 바람에 날려 분위기는 이미 ‘어명이오!’</figcaption></figure></div></section><section class="ch"><div class="dot"></div>
+<header><span class="no">02</span><div><p class="time">10:32 · 관풍헌 (영월읍)</p><h2>관풍헌 — 은행나무 하늘 반이 노랑</h2></div></header>
+<p class="intro">영월읍 관풍헌. 홍수로 청령포를 떠난 단종이 옮겨 와 머물다 생을 마친 곳임. 마당의 은행나무가 한창 노랗게 물들어 이날 사진 중 가장 노란 한 장이 나옴.</p><div class="grid"><figure class="card"><div class="ph"><img loading="lazy" src="img/20261025_103245.jpg" alt="관풍헌 은행나무 아래 부부" style="object-position:50% 78%"><span class="ts">10:32</span></div><figcaption>관풍헌 은행나무 아래 황금빛 투샷. 은행 냄새는 사진에 안 담김 — 스마트폰이 가진 최고의 기능.</figcaption></figure></div></section><section class="ch"><div class="dot"></div>
+<header><span class="no">03</span><div><p class="time">11:45 – 12:45 · 청령포</p><h2>청령포 — 배 타고 들어가는 섬 아닌 섬</h2></div></header>
+<p class="intro">삼면이 서강에 둘러싸이고 한 면은 절벽인 단종의 유배지. 나룻배로 건너야만 닿는 곳이라 들어가는 순간부터 분위기가 다름. 배 타기 전 선착장에서 돌탑부터 쌓고, 억새, 어소, 관음송, 망향탑까지 한 바퀴 돎.</p><div class="grid"><figure class="card"><div class="ph"><img loading="lazy" src="img/kakao_stone.jpg" alt="청령포 선착장에서 돌탑을 쌓는 남편" style="object-position:45% 50%"><span class="ts">11:45</span></div><figcaption>배 기다리다 돌탑 장인 등판. 돌 하나에 소원 하나 — 손자 건강하게, 윤아 똑똑하고 이쁘게. 소원이 무거워서 돌 고르는 손이 국가대표급으로 신중함.</figcaption></figure><figure class="card"><div class="ph"><img loading="lazy" src="img/1792985678481.jpg" alt="선착장에 완성한 작은 돌탑" style="object-position:50% 50%"></div><figcaption>완성작. 높이는 무릎 아래, 소원 하중은 63빌딩급. 안 무너졌으니 하늘에 접수 완료로 간주함.</figcaption></figure><figure class="card wide"><div class="ph"><img loading="lazy" src="img/20261025_115711.jpg" alt="억새밭 앞 부부 셀카" style="object-position:50% 40%"><span class="ts">11:57</span></div><figcaption>억새가 키를 넘는 계절. 바람에 날린 억새 머리 vs 아내 머리, 심사 결과 무승부.</figcaption></figure><figure class="card"><div class="ph"><img loading="lazy" src="img/20261025_120143.jpg" alt="단종어소 앞 부부 셀카" style="object-position:50% 50%"><span class="ts">12:01</span></div><figcaption>단종어소 앞. 임금님 댁 앞에서 인사도 없이 사진만 찍은 불경죄, 미소로 감형 신청함.</figcaption></figure><figure class="card wide"><div class="gal g4"><img loading="lazy" src="img/20261025_120429.jpg" alt="담장 쪽으로 누운 소나무 아래 셀카" style="object-position:50% 80%"><img loading="lazy" src="img/20261025_120514.jpg" alt="담장을 넘은 소나무 앞 부부" style="object-position:52% 55%"><img loading="lazy" src="img/20261025_120622.jpg" alt="돌담과 어소 지붕 앞 셀카" style="object-position:42% 60%"><img loading="lazy" src="img/20261025_120741.jpg" alt="솔숲 사이 부부 전신" style="object-position:48% 60%"><span class="ts">12:04 – 12:07</span></div><figcaption>담장 넘어 절하듯 누운 소나무 앞에서 3분간 4연사. 소나무는 넙죽 절하는데 우리는 고개 한 번 안 숙임. 고르기 포기하고 몽땅 실음.</figcaption></figure><figure class="card wide"><div class="ph"><img loading="lazy" src="img/20261025_120945.jpg" alt="관음송 아래 부부 셀카" style="object-position:50% 70%"><span class="ts">12:09</span></div><figcaption>600살 관음송(천연기념물). 단종의 모습을 보고(觀) 울음을 들었다(音)는 나무 앞에서 우리는 점심 메뉴 회의 중 — 나무가 또 다 들었음.</figcaption></figure><figure class="card"><div class="ph"><img loading="lazy" src="img/20261025_121528.jpg" alt="망향탑 돌탑 앞 부부" style="object-position:50% 50%"><span class="ts">12:15</span></div><figcaption>단종은 한양을 그리며 망향탑을 쌓았고, 우리는 산채 정식을 그리며 하산을 서두름.</figcaption></figure><figure class="card"><div class="ph"><img loading="lazy" src="img/20261025_121326.jpg" alt="전망대에서 강을 배경으로 한 셀카" style="object-position:60% 50%"><span class="ts">12:13</span></div><figcaption>전망대 셀카. 서강은 굽이굽이, 셀카 팔은 쭉쭉. 화각 장인 레벨 업.</figcaption></figure><figure class="card wide"><div class="ph"><img loading="lazy" src="img/20261025_124551.jpg" alt="청령포 나루와 서강 앞 부부 셀카" style="object-position:50% 50%"><span class="ts">12:45</span></div><figcaption>나룻배 타기 직전 한 장. 배경은 달력 사진, 표정은 ‘배고픔 30분 전’.</figcaption></figure></div></section><section class="ch"><div class="dot"></div>
+<header><span class="no">04</span><div><p class="time">13:00 전후 · 영월 시내 식당 (시각 기록 없음, 추정)</p><h2>점심 — 반찬 세다가 포기</h2></div></header>
+<p class="intro">청령포에서 나와 점심. 놋그릇 반찬이 줄지어 나오는 산채 정식 스타일 (메뉴명 추정).</p><div class="grid"><figure class="card"><div class="ph"><img loading="lazy" src="img/1792985945522.jpg" alt="놋그릇 반찬이 가득한 점심상" style="object-position:50% 45%"></div><figcaption>놋그릇 반찬 군단 집결. 열두 개까지 세다가 포기, 젓가락은 행복한 길치가 됨.</figcaption></figure></div></section><section class="ch"><div class="dot"></div>
+<header><span class="no">05</span><div><p class="time">14:49 · 고씨굴</p><h2>고씨굴 — 안전모 쓰고 동굴 탐험</h2></div></header>
+<p class="intro">마지막 코스는 남한강 변 석회동굴 고씨굴. 입구에서 안전모를 쓰고 좁은 통로를 따라 들어감.</p><div class="grid"><figure class="card"><div class="ph"><img loading="lazy" src="img/20261025_144946.jpg" alt="고씨굴 안 안전모 셀카" style="object-position:50% 78%"><span class="ts">14:49</span></div><figcaption>고씨굴 탐험대장 출동. 안전모 쓰자마자 표정이 ‘광부 경력 30년’. 뒤의 종유석은 수억 년, 이 표정은 0.3초.</figcaption></figure></div></section><section class="ch"><div class="dot"></div>
+<header><span class="no">06</span><div><p class="time">15:00 이후 · 고씨굴 → 집</p><h2>귀가 — 다음 여행은 어디로?</h2></div></header>
+<p class="intro">단종의 능에서 시작해 유배지 청령포를 거쳐 동굴로 끝난 하루. 가을이 딱 반쯤 와 있던 영월이었음. 비슷한 구도의 장릉 사진 1장만 빼고 19장을 남김. 다음 편은 Vol.03 익선동.</p></section></main>
+<footer>사진 시각은 파일명·촬영정보 기준 · 시각 기록이 없는 사진 2장은 내용상 위치에 배치<br>
+<span class="next">Vol.02 영월 → <a href="../vol03-ikseondong/">Vol.03 익선동</a></span><br>
+<a href="../">부부 여행기 목록으로</a></footer>
+<div id="lb" role="dialog" aria-modal="true" aria-label="사진 크게 보기"><button type="button" class="x" aria-label="닫기">✕</button><img alt=""></div>
+<script>
+/* 사진 확대: 열 때 기록 1칸 추가 → 뒤로가기는 사진만 닫고 같은 위치에 머묾 */
+(()=>{const lb=document.getElementById('lb'),li=lb.querySelector('img');let pushed=false;
+const hide=()=>{lb.classList.remove('on');li.removeAttribute('src');document.documentElement.style.overflow=''};
+const show=i=>{li.src=i.currentSrc||i.src;li.alt=i.alt;lb.classList.add('on');document.documentElement.style.overflow='hidden';
+ try{history.pushState({lb:1},'');pushed=true}catch(e){pushed=false}};
+const close=()=>{if(!lb.classList.contains('on'))return;if(pushed){pushed=false;try{history.back();return}catch(e){}}hide()};
+try{if(history.state&&history.state.lb)history.replaceState(null,'')}catch(e){}
+document.querySelectorAll('.ph img,.gal img').forEach(i=>i.addEventListener('click',()=>show(i)));
+lb.addEventListener('click',close);
+addEventListener('popstate',()=>{pushed=false;hide()});
+addEventListener('pageshow',()=>{if(lb.classList.contains('on'))hide()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});})();
+</script>
+</body>
+</html>
