@@ -2,7 +2,7 @@
 
 부부가 각자 휴대폰에서 쓰는 개인 건강 기록 앱(갤럭시용). 체중·BMI, 혈압·맥박·산소포화도, 운동, 기념일을 기록하고, 탁구사랑클럽(탁구 스코어보드)을 앱 안에 함께 넣었음. 두 휴대폰의 데이터는 서로 연동하지 않음.
 
-- 현재 버전: **1.14** (versionCode 15) · 패키지 `kr.family.healthguard`
+- 현재 버전: **1.15** (versionCode 16) · 패키지 `kr.family.healthguard`
 - 설치 파일(APK)은 저장소에 넣지 않고 **Releases** 에 올림
 
 ## 폴더 구성
@@ -34,14 +34,14 @@ Ubuntu 22.04/24.04 또는 Windows WSL Ubuntu 기준.
 sudo apt install -y openjdk-21-jdk-headless aapt zipalign apksigner dalvik-exchange libandroid-23-java nodejs npm python3 zip
 # 저장소 폴더 바로 아래에 signing/ 과 private/ 를 풀어 둠 (두 폴더는 .gitignore 로 제외됨)
 cd android && npm ci                     # 최초 1회
-VCODE=15 VNAME=1.14 ./build.sh           # 결과: android/out/healthguard.apk
+VCODE=16 VNAME=1.15 ./build.sh           # 결과: android/out/healthguard.apk
 cd ../web && python3 build_web.py        # 결과: web/dist/health.html
 ```
 
 - 저장소 폴더 경로에 한글이 있으면 빌드 도구가 실패함. 영문 폴더(예: `takgu-sarang`)에서 실행하고 `export LC_ALL=C.UTF-8` 를 설정함.
 - 새 버전을 낼 때는 `android/AndroidManifest.xml` 의 versionCode·versionName 과 `MainActivity.java` 의 `version()` 반환값을 함께 올림.
 - **같은 서명키로 서명해야** 휴대폰에서 '업데이트'가 되고 기록이 유지됨. 인증서 SHA-256 `4132c7ae…07d0c58`.
-- 이 저장소 + `signing/` + `private/` 로 빌드하면 배포된 1.14 APK와 내용(서명 제외 397개 항목)이 같음을 확인함(2026-11-10).
+- 이 저장소 + `signing/` + `private/` 로 빌드하면 배포된 1.15 APK와 내용(서명 제외 397개 항목)이 같음을 확인함(2026-11-10).
 
 ## 판정·계산 기준 (근거)
 
@@ -75,3 +75,4 @@ cd ../web && python3 build_web.py        # 결과: web/dist/health.html
 | 1.12 | 2026-11-09 | 시간·걸음 조절 버튼 통일: **걷기** −1천보·−500보·**8,000보**·+500보·+1천보(3천~25천 보) / **골프연습** −10분·−5분·**60분**·+5분·+10분 / **실외자전거** 같은 방식, 기본 **120분** / **슬로우조깅** 시간 입력 복원, 기본 **60분**(거리 입력은 없음). 30·45·60·90분·걷기 빠른선택 버튼 삭제 |
 | 1.13 | 2026-11-10 | **기록 첫 화면**: 체중·BMI 큰 카드(좌) + 혈압·산소포화도·맥박 3단(우), '빠른 기록 / 직전 값이 미리 채워집니다' 행 삭제 / 하단 메뉴 순서 **기록·운동·탁구·기념일·설정** / **운동 화면**: '종목' 줄 삭제, 모든 입력값 기본값=직전 입력값(없으면 기본), 'MET …' 문구 삭제, 실외자전거 거리 입력 삭제 |
 | 1.14 | 2026-11-10 | 체중 입력 위 '바로 직전 체중 / 직전값 복원' 상자 삭제. **혈압 입력 화면 미리보기 오류 수정**(1.3부터 혈압 탭을 열면 내부 오류로 '직전 대비' 표시가 안 되던 문제) |
+| 1.15 | 2026-11-10 | 운동 화면: 걷기를 제외한 5종목(철봉·스트레칭·실외자전거·골프연습·슬로우조깅) 가운데 입력창 글자 2단계 축소(1.75rem→1.35rem, 380px 이하 폰 1.05rem) |

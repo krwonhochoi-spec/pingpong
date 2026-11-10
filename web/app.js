@@ -664,16 +664,16 @@ function exForm() {
     <div class="field"><div class="exgrid" role="radiogroup" aria-label="종목">${EX_ON.map(x => `<label class="excard x-${EXC[x.k]}"><input type="radio" id="exK-${x.k}" name="exK" value="${x.k}"${x.k === k ? ' checked' : ''}><span>${EXIMG[x.k]}<b>${x.n}</b></span></label>`).join('')}</div></div>
     <div class="stps">
       <div id="eMinRow"${x0.hang || x0.steps || x0.reps ? ' hidden' : ''}>
-      ${stp5('eMin', '운동 시간', lastVal(k), { min: 5, max: 600, step: 5, big: 10, unit: '분', base: defMin(k), fmt: 'min', sfx: '분' })}
+      ${stp5('eMin', '운동 시간', lastVal(k), { min: 5, max: 600, step: 5, big: 10, unit: '분', base: defMin(k), fmt: 'min', sfx: '분', cls: 'stp-s' })}
       </div>
       <div id="eStepRow"${x0.steps ? '' : ' hidden'}>
         ${stp5('eSteps', '걸음 수', lastVal('walk'), { min: STEP_MIN, max: STEP_MAX, step: 500, big: 1000, unit: '3천~25천 보', base: 8000, fmt: 'step', cls: 'stp-w', lab: n => n >= 1000 && n % 1000 === 0 ? n / 1000 + '천보' : n + '보' })}
       </div>
       <div id="eRepRow"${x0.reps ? '' : ' hidden'}>
-        ${stp5('eReps', '스트레칭 횟수', lastVal('stretch'), { min: REP_MIN, max: REP_MAX, step: 1, big: 5, unit: '5~100번', base: 30, fmt: 'rep', sfx: '번' })}
+        ${stp5('eReps', '스트레칭 횟수', lastVal('stretch'), { min: REP_MIN, max: REP_MAX, step: 1, big: 5, unit: '5~100번', base: 30, fmt: 'rep', sfx: '번', cls: 'stp-s' })}
       </div>
       <div id="eHangRow"${x0.hang ? '' : ' hidden'}>
-        ${stp5('eSec', '매달린 시간', lastVal('bar'), { min: HANG_MIN, max: HANG_MAX, step: 5, big: 10, unit: '30초~3분', base: HANG_BASE, fmt: 'sec', sfx: '초' })}
+        ${stp5('eSec', '매달린 시간', lastVal('bar'), { min: HANG_MIN, max: HANG_MAX, step: 5, big: 10, unit: '30초~3분', base: HANG_BASE, fmt: 'sec', sfx: '초', cls: 'stp-s' })}
       </div>
       <div id="eDistRow"${exOf(k).dist ? '' : ' hidden'}>${stp5('eKm', '거리', lastOf && lastOf.km ? lastOf.km : '', { min: 0, max: 300, step: 0.5, big: 1, dec: 1, unit: 'km', base: 3 })}</div>
     </div>
