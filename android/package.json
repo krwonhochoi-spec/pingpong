@@ -1,0 +1,11 @@
+{
+  "name": "takgu-sarang-build",
+  "private": true,
+  "description": "탁구사랑(건강지키미) APK 빌드용 글꼴·차트·Tailwind",
+  "dependencies": {
+    "@fontsource/ibm-plex-sans-kr": "5.3.0",
+    "@fontsource/jua": "5.3.0",
+    "chart.js": "4.4.1",
+    "tailwindcss": "3.4.17"
+  }
+}
