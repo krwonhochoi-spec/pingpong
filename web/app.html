@@ -377,19 +377,21 @@ table.rec td .note{font-size:.76rem}
 @media (max-width:380px){.kpis-r .kpi:not(:first-child){padding:8px 8px 7px}.kpis-r .kpi:not(:first-child) .kpi-l{font-size:.8rem}.kpis-r .kpi:not(:first-child) .kpi-b .pill{font-size:.6rem;padding:0 5px}}
 .stp-s .stp5-c input{font-size:1.35rem}   /* 운동 시간·횟수 가운데 값: 기본 1.75rem에서 2단계 축소 */
 @media (max-width:380px){.stp-s .stp5-c{gap:4px}.stp-s .stp5-c .step{flex:0 0 48px;font-size:.78rem;white-space:nowrap;letter-spacing:-.04em;padding:0}.stp-s .stp5-c input{font-size:1.05rem;padding:0 2px;letter-spacing:-.03em}}
+/* v5.0: 상단 헤더 삭제 — 본문 위 여백만 두고, 날짜는 체중 카드 안 */
+#view{padding-top:calc(env(safe-area-inset-top,0px) + 12px)}
+.kpi-dt{font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:2px}
 </style>
 
 <div class="app">
-  <header class="top"><div class="top-in"><h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3.2 8.4-7 10-3.8-1.6-7-5-7-10V6z"/><path d="M8.5 12.5h2l1-2.5 2 5 1-2.5h1.5"/></svg><span id="hello">건강지키미</span></h1><span class="date" id="today"></span></div></header>
   <main id="view"><p class="loading">불러오는 중…</p></main>
 </div>
 <nav class="tabs" aria-label="메뉴" hidden>
   <div class="tabs-in">
-    <button type="button" data-act="tab" data-tab="rec"><svg viewBox="0 0 24 24"><path d="M4 19h16"/><path d="M5 15l4-5 4 3 6-7"/></svg>기록</button>
-    <button type="button" data-act="tab" data-tab="ex"><svg viewBox="0 0 24 24"><circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h5l3 7M10 9l2 7h-6M14 5h2"/></svg>운동</button>
-    <button type="button" data-act="tab" data-tab="pp"><svg viewBox="0 0 24 24"><circle cx="9.5" cy="9.5" r="5.5"/><path d="M13.4 13.4l5.6 5.6"/><circle cx="18.5" cy="6" r="1.6"/></svg>탁구</button>
-    <button type="button" data-act="tab" data-tab="ann"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>기념일</button>
     <button type="button" data-act="tab" data-tab="set"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>설정</button>
+    <button type="button" data-act="tab" data-tab="ann"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>기념일</button>
+    <button type="button" data-act="tab" data-tab="pp"><svg viewBox="0 0 24 24"><circle cx="9.5" cy="9.5" r="5.5"/><path d="M13.4 13.4l5.6 5.6"/><circle cx="18.5" cy="6" r="1.6"/></svg>탁구</button>
+    <button type="button" data-act="tab" data-tab="ex"><svg viewBox="0 0 24 24"><circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h5l3 7M10 9l2 7h-6M14 5h2"/></svg>운동</button>
+    <button type="button" data-act="tab" data-tab="rec"><svg viewBox="0 0 24 24"><path d="M4 19h16"/><path d="M5 15l4-5 4 3 6-7"/></svg>체중</button>
   </div>
 </nav>
 <div id="sheet" class="sheet" hidden><div class="sheet-card" role="dialog" aria-modal="true" aria-label="메시지"><div id="sheetBody"></div><button type="button" class="btn primary big" data-act="sheet-close">확인</button></div></div>

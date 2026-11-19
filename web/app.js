@@ -53,7 +53,8 @@ const EX = [
   { k: 'stretch', n: '스트레칭', met: 2.3, reps: 1 },                                   // 02101 Stretching, mild 2.3
   { k: 'bike', n: '실외자전거', mets: { 1: 4.3, 2: 7.0, 3: 7.0 } },
   { k: 'golfp', n: '골프연습', met: 3.5 },
-  { k: 'sjog', n: '슬로우조깅', mets: { 1: 3.3, 2: 3.3, 3: 7.5 } },   // 시간 입력(기본 60분), 거리 입력 없음
+  { k: 'dumb', n: '아령', met: 3.5, dumb: 1 },   // 2024 Compendium 근력운동(자유중량, 보통 강도) 계열 3.5 — 근사. 번수 → 시간은 1번 5초 환산(추정)
+  { k: 'sjog', n: '슬로우조깅', mets: { 1: 3.3, 2: 3.3, 3: 7.5 }, old: 1 },   // 1.16부터 입력 화면에서 숨김(기존 기록 유지)
   { k: 'yoga', n: '실내요가', mets: { 1: 2.3, 2: 2.7, 3: 4.0 }, old: 1 },     // 입력 화면에서는 숨김(기존 기록은 그대로 표시·합산)
   { k: 'ibike', n: '실내자전거', met: 6.8, old: 1 }, { k: 'golfr', n: '골프라운드', met: 4.5, old: 1 },
   { k: 'jog', n: '조깅', met: 7.5, old: 1 }, { k: 'tt', n: '탁구', met: 4.0, old: 1 }, { k: 'etc', n: '기타', met: null, old: 1 }];
@@ -65,7 +66,7 @@ const fmin = n => (Math.round(n * 10) / 10).toLocaleString();
 const HANG_MIN = 30, HANG_MAX = 180, HANG_BASE = 60;       // 매달리기 1회: 30초 ~ 3분, 5초·10초 단위 조절, 기준 1분
 const fsec = t => t < 60 ? `${t}초` : t % 60 ? `${Math.floor(t / 60)}분 ${t % 60}초` : `${t / 60}분`;
 const STEP_MIN = 3000, STEP_MAX = 25000, STEPS_PER_MIN = 100;   // 걸음 수 입력 범위, 시간 환산(분당 100보 ≈ 보통 속도, 추정)
-const DEF_INT = { walk: 2, bar: 3, stretch: 3, bike: 3, golfp: 2, sjog: 2 };   // 강도 선택 삭제 → 종목별 고정값(보통=2, 힘듦=3)
+const DEF_INT = { walk: 2, bar: 3, stretch: 3, bike: 3, golfp: 2, sjog: 2, dumb: 2 };   // 강도 선택 삭제 → 종목별 고정값(보통=2, 힘듦=3)
 const intOf = k => DEF_INT[k] || 2;
 const clampN = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 /** 종목별 직전 입력값(없으면 기본값). 걷기=보, 철봉=초, 스트레칭=번, 그 외=분 */
@@ -74,9 +75,11 @@ function lastVal(k) {
   if (k === 'walk') return clampN(le && le.steps ? le.steps : 8000, STEP_MIN, STEP_MAX);
   if (k === 'bar') return clampN(le && le.sec ? le.sec : HANG_BASE, HANG_MIN, HANG_MAX);
   if (k === 'stretch') return clampN(le && le.reps ? le.reps : 30, REP_MIN, REP_MAX);
+  if (k === 'dumb') return clampN(le && le.reps ? le.reps : 30, DB_MIN, DB_MAX);
   return clampN(le && le.min && !le.steps && !le.sec && !le.reps ? Math.round(le.min) : defMin(k), 5, 600);
 }
 const defMin = k => ({ golfp: 60, bike: 120, sjog: 60 })[k] || 30;   // 시간 기본값(센터): 골프 60분·자전거 120분·슬로우조깅 60분
+const DB_MIN = 5, DB_MAX = 200, DB_SEC = 5;   // 아령 번수 범위(5~200번), 1번 ≈ 5초 환산(추정)
 const REP_MIN = 5, REP_MAX = 100, REP_SEC = 30;   // 스트레칭 번수 입력 범위(5~100번), 1번 ≈ 30초 환산(추정)
 const exOf = k => EX.find(x => x.k === k) || EX[EX.length - 1];
 const metOf = (k, int) => { const x = exOf(k); return x.mets ? x.mets[int || 2] : (x.met ?? ETC_MET[int || 2]); };
@@ -130,7 +133,16 @@ function holidaysOfYear(y) {
   }
   return (holCache[y] = h);
 }
-const DEFAULT_ANNIV = [];
+const DEFAULT_ANNIV = [
+  { n: '결혼기념일', k: 'wed', c: 'wed', m: 10, d: 3 },
+  { n: '큰아들 생일', k: 'bday', m: 12, d: 7 },
+  { n: '큰며느리 생일', k: 'bday', c: 'inlaw', m: 12, d: 1 },
+  { n: '손녀 생일', k: 'bday', c: 'kid', m: 3, d: 27 },
+  { n: '작은아들 생일', k: 'bday', m: 3, d: 21 },
+  { n: '작은며느리 생일', k: 'bday', c: 'inlaw', m: 8, d: 13 },
+  { n: '남편 생일', k: 'bday', m: 9, d: 28, lunar: 1 },
+  { n: '아내 생일', k: 'bday', m: 12, d: 31 },
+  { n: '장모님 생일', k: 'bday', c: 'elder', m: 11, d: 25, lunar: 1 }];
 const seedAnnivs = () => DEFAULT_ANNIV.map((a, i) => ({ id: 'a' + i, ...a }));
 const annivs = () => (S.profile && Array.isArray(S.profile.annivs)) ? S.profile.annivs : [];
 function occOf(a, y) {
@@ -454,12 +466,13 @@ function banners() {
 function latestBefore(type, ts) { const a = list(type).filter(e => e.ts <= ts); return a[a.length - 1] || null; }
 /* ───────── v3 공통 조각 ───────── */
 const last = a => a[a.length - 1];
-const EXC = { bike: 'e', ibike: 'e', golfp: 'h', golfr: 'h', sjog: 'w', jog: 'w', yoga: 'c', stretch: 'c', bar: 'i', tt: 'v', walk: 'r', etc: 'r' };
-const EXG = { bike: 'bike', ibike: 'bike', golfp: 'golfp', golfr: 'golfp', sjog: 'sjog', jog: 'sjog', yoga: 'yoga', stretch: 'stretch', bar: 'bar', walk: 'walk', tt: 'tt' };
+const EXC = { bike: 'e', ibike: 'e', golfp: 'h', golfr: 'h', sjog: 'w', jog: 'w', dumb: 'w', yoga: 'c', stretch: 'c', bar: 'i', tt: 'v', walk: 'r', etc: 'r' };
+const EXG = { bike: 'bike', ibike: 'bike', golfp: 'golfp', golfr: 'golfp', sjog: 'sjog', jog: 'sjog', dumb: 'dumb', yoga: 'yoga', stretch: 'stretch', bar: 'bar', walk: 'walk', tt: 'tt' };
 const FACE = (x, y, closed) => `<circle cx="${x}" cy="${y}" r="7.5" fill="#F5C6A0"/>${closed ? `<path d="M${x - 3.6} ${y - .6}q1.3 1.2 2.6 0M${x + 1} ${y - .6}q1.3 1.2 2.6 0" stroke="#3A2E2A" stroke-width="1.2" fill="none" stroke-linecap="round"/>` : `<circle cx="${x - 2.4}" cy="${y - .8}" r="1.1" fill="#3A2E2A"/><circle cx="${x + 2.6}" cy="${y - .8}" r="1.1" fill="#3A2E2A"/>`}<path d="M${x - 2.4} ${y + 2.6}q2.5 2.2 5 0" stroke="#A0533F" stroke-width="1.4" fill="none" stroke-linecap="round"/>`;
 const EXIMG = {
   bike: `<svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="46" fill="#E3EEFB"/><path d="M10 81h76" stroke="#BCD2EE" stroke-width="3" stroke-linecap="round"/><g fill="none" stroke="#2F3A56" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="26" cy="66" r="13"/><circle cx="72" cy="66" r="13"/><path d="M26 66l13-19h22l11 19M39 47l9 19 13-19M48 66H26M35 42h9M61 47l3-8h5"/></g><path d="M41 40l13 10-6 14" stroke="#2F3A56" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M41 40l15-13" stroke="#1C7AD6" stroke-width="11" stroke-linecap="round"/><path d="M56 28l9 11" stroke="#F5C6A0" stroke-width="4.5" stroke-linecap="round"/>${FACE(63, 19)}<path d="M55.5 18a7.5 7.5 0 0 1 15 0z" fill="#1C7AD6"/></svg>`,
   golfp: `<svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="46" fill="#DDF3EA"/><path d="M10 82h76" stroke="#B5E0CE" stroke-width="3" stroke-linecap="round"/><path d="M46 58l-8 23M46 58l8 23" stroke="#2F3A56" stroke-width="6.5" fill="none" stroke-linecap="round"/><path d="M46 58l1-21" stroke="#0C9273" stroke-width="12" stroke-linecap="round"/><path d="M60 27l12-13" stroke="#4A4F5C" stroke-width="2.6" stroke-linecap="round"/><path d="M69.5 12.5l5-1.5 1.5 4.5" stroke="#4A4F5C" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M45 41l14-14M50 40l10-13" stroke="#F5C6A0" stroke-width="4.5" stroke-linecap="round"/>${FACE(48, 27)}<path d="M40.5 26a7.5 7.5 0 0 1 15 0h4.5z" fill="#0C9273"/><circle cx="36" cy="79" r="3" fill="#FFFFFF" stroke="#9AA3AE" stroke-width="1.2"/></svg>`,
+  dumb: `<svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="46" fill="#FDE8DE"/><path d="M10 82h76" stroke="#F4C7B3" stroke-width="3" stroke-linecap="round"/><path d="M48 56l-8 24M48 56l8 24" stroke="#2F3A56" stroke-width="6.5" fill="none" stroke-linecap="round"/><path d="M48 56V36" stroke="#DD5329" stroke-width="13" stroke-linecap="round"/><path d="M43 38l-9 12-4-14M53 38l9 12 4-14" stroke="#F5C6A0" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 34h18M57 34h18" stroke="#2F3A56" stroke-width="3" stroke-linecap="round"/><rect x="19" y="27" width="6" height="14" rx="2" fill="#2F3A56"/><rect x="35" y="27" width="6" height="14" rx="2" fill="#2F3A56"/><rect x="55" y="27" width="6" height="14" rx="2" fill="#2F3A56"/><rect x="71" y="27" width="6" height="14" rx="2" fill="#2F3A56"/>${FACE(48, 22)}</svg>`,
   sjog: `<svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="46" fill="#FDE8DE"/><path d="M10 82h76" stroke="#F4C7B3" stroke-width="3" stroke-linecap="round"/><path d="M12 40h12M8 50h13M14 60h10" stroke="#F2B49A" stroke-width="3" stroke-linecap="round"/><path d="M46 54l-6 10-10 8M46 54l10 10-2 15h6" stroke="#2F3A56" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M46 54l4-20" stroke="#DD5329" stroke-width="12" stroke-linecap="round"/><path d="M48 37l-7 8-4 7M51 37l7 8 6-7" stroke="#F5C6A0" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>${FACE(53, 23)}<path d="M45.6 20.5h14.8" stroke="#DD5329" stroke-width="3" stroke-linecap="round"/></svg>`,
   walk: `<svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="46" fill="#FFF0CE"/><path d="M10 82h76" stroke="#F0D79B" stroke-width="3" stroke-linecap="round"/><path d="M46 56l-9 11-9 12M46 56l9 11 3 12" stroke="#2F3A56" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="26" cy="80.5" rx="6" ry="3" fill="#C98A00"/><ellipse cx="61" cy="80.5" rx="6" ry="3" fill="#C98A00"/><path d="M46 56l3-21" stroke="#C98A00" stroke-width="12" stroke-linecap="round"/><path d="M47 39l-7 9-3 8M51 39l8 7 6-4" stroke="#F5C6A0" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>${FACE(52, 25)}<path d="M44.5 23a7.5 7.5 0 0 1 15 0z" fill="#C98A00"/><path d="M72 30h10M76 38h8" stroke="#F0D79B" stroke-width="3" stroke-linecap="round"/></svg>`,
   stretch: `<svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="46" fill="#EEE7FB"/><path d="M10 82h76" stroke="#D3C5F2" stroke-width="3" stroke-linecap="round"/><path d="M46 60l-8 21M50 60l9 21" stroke="#2F3A56" stroke-width="6.5" fill="none" stroke-linecap="round"/><path d="M48 60l7-21" stroke="#7243D6" stroke-width="12" stroke-linecap="round"/><path d="M52 42l8-15 4-12M57 41l7-12 8-8" stroke="#F5C6A0" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>${FACE(51, 32)}<path d="M43.5 29a7.5 7.5 0 0 1 15 0z" fill="#7243D6"/><path d="M22 30q-5 10 0 20" stroke="#D3C5F2" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`,
@@ -663,11 +676,14 @@ function exForm() {
   return `<form class="entry" data-form="e" novalidate>
     <div class="field"><div class="exgrid" role="radiogroup" aria-label="종목">${EX_ON.map(x => `<label class="excard x-${EXC[x.k]}"><input type="radio" id="exK-${x.k}" name="exK" value="${x.k}"${x.k === k ? ' checked' : ''}><span>${EXIMG[x.k]}<b>${x.n}</b></span></label>`).join('')}</div></div>
     <div class="stps">
-      <div id="eMinRow"${x0.hang || x0.steps || x0.reps ? ' hidden' : ''}>
+      <div id="eMinRow"${x0.hang || x0.steps || x0.reps || x0.dumb ? ' hidden' : ''}>
       ${stp5('eMin', '운동 시간', lastVal(k), { min: 5, max: 600, step: 5, big: 10, unit: '분', base: defMin(k), fmt: 'min', sfx: '분', cls: 'stp-s' })}
       </div>
       <div id="eStepRow"${x0.steps ? '' : ' hidden'}>
         ${stp5('eSteps', '걸음 수', lastVal('walk'), { min: STEP_MIN, max: STEP_MAX, step: 500, big: 1000, unit: '3천~25천 보', base: 8000, fmt: 'step', cls: 'stp-w', lab: n => n >= 1000 && n % 1000 === 0 ? n / 1000 + '천보' : n + '보' })}
+      </div>
+      <div id="eDbRow"${x0.dumb ? '' : ' hidden'}>
+        ${stp5('eDb', '아령 횟수', lastVal('dumb'), { min: DB_MIN, max: DB_MAX, step: 5, big: 10, unit: '5~200번', base: 30, fmt: 'rep', sfx: '번', cls: 'stp-s' })}
       </div>
       <div id="eRepRow"${x0.reps ? '' : ' hidden'}>
         ${stp5('eReps', '스트레칭 횟수', lastVal('stretch'), { min: REP_MIN, max: REP_MAX, step: 1, big: 5, unit: '5~100번', base: 30, fmt: 'rep', sfx: '번', cls: 'stp-s' })}
@@ -687,19 +703,19 @@ function exForm() {
 function exStats() {
   const now = new Date(), s = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
   const items = exList().filter(e => e.ts >= s);
-  const groups = [['걷기', ['walk'], 'r', 'walk'], ['철봉 매달리기', ['bar'], 'i', 'bar'], ['스트레칭', ['stretch'], 'c', 'stretch'], ['실외자전거', ['bike', 'ibike'], 'e', 'bike'], ['골프연습', ['golfp', 'golfr'], 'h', 'golfp'], ['슬로우조깅', ['sjog', 'jog'], 'w', 'sjog'], ['탁구', ['tt'], 'v', 'tt'], ['실내요가', ['yoga'], 'c', 'yoga']].filter(g => g[3] !== 'yoga' || items.some(e => e.k === 'yoga'));
+  const groups = [['걷기', ['walk'], 'r', 'walk'], ['철봉 매달리기', ['bar'], 'i', 'bar'], ['스트레칭', ['stretch'], 'c', 'stretch'], ['실외자전거', ['bike', 'ibike'], 'e', 'bike'], ['골프연습', ['golfp', 'golfr'], 'h', 'golfp'], ['아령', ['dumb'], 'w', 'dumb'], ['탁구', ['tt'], 'v', 'tt'], ['슬로우조깅', ['sjog', 'jog'], 'w', 'sjog'], ['실내요가', ['yoga'], 'c', 'yoga']].filter(g => (g[3] !== 'yoga' && g[3] !== 'sjog') || items.some(e => g[1].includes(e.k)));
   return `<section class="tile t-e">${tileHead('chart', `${now.getMonth() + 1}월 종목별 합계`)}<div class="exstats">${groups.map(([n, ks, x, ik]) => {
     const a = items.filter(e => ks.includes(e.k)), min = m1(a.reduce((t, e) => t + e.min, 0)), km = a.reduce((t, e) => t + (e.km || 0), 0);
-    return `<div class="exstat x-${x}"><span class="exstat-h">${exIco(ik)}${n}</span><b>${min}분</b><small>${a.length}${ik === 'tt' ? '일 × 80분' : '회'}${ik === 'bar' && a.some(e => e.sets > 1) ? ` · ${a.reduce((t, e) => t + (e.sets || 1), 0)}세트` : ''}${ik === 'stretch' && a.some(e => e.reps) ? ` · ${a.reduce((t, e) => t + (e.reps || 0), 0)}번` : ''}${ik === 'walk' && a.some(e => e.steps) ? ` · ${a.reduce((t, e) => t + (e.steps || 0), 0).toLocaleString()}보` : ''}${km ? ` · ${f1(km)}km` : ''}</small></div>`;
+    return `<div class="exstat x-${x}"><span class="exstat-h">${exIco(ik)}${n}</span><b>${min}분</b><small>${a.length}${ik === 'tt' ? '일 × 80분' : '회'}${ik === 'bar' && a.some(e => e.sets > 1) ? ` · ${a.reduce((t, e) => t + (e.sets || 1), 0)}세트` : ''}${ik === 'dumb' && a.some(e => e.reps) ? ` · ${a.reduce((t, e) => t + (e.reps || 0), 0)}번` : ''}${ik === 'stretch' && a.some(e => e.reps) ? ` · ${a.reduce((t, e) => t + (e.reps || 0), 0)}번` : ''}${ik === 'walk' && a.some(e => e.steps) ? ` · ${a.reduce((t, e) => t + (e.steps || 0), 0).toLocaleString()}보` : ''}${km ? ` · ${f1(km)}km` : ''}</small></div>`;
   }).join('')}</div></section>`;
 }
 function exTimeline() {
   const f = ui.exF || 'all';
-  const groups = { all: null, tt: ['tt'], bike: ['bike', 'ibike'], golf: ['golfp', 'golfr'], sjog: ['sjog', 'jog'], yoga: ['yoga'], bar: ['bar'], walk: ['walk'], stretch: ['stretch'] };
+  const groups = { all: null, tt: ['tt'], bike: ['bike', 'ibike'], golf: ['golfp', 'golfr'], sjog: ['sjog', 'jog'], yoga: ['yoga'], bar: ['bar'], walk: ['walk'], stretch: ['stretch'], dumb: ['dumb'] };
   const items = exList().filter(e => !groups[f] || groups[f].includes(e.k)).sort((a, b) => b.ts - a.ts).slice(0, 40);
   const wt = (last(list('w')) || {}).w || 65;
   return `<section class="tile t-e">${tileHead('doc', '운동 타임라인')}
-    <div class="segb">${[['all', '전체'], ['walk', '걷기'], ['bar', '철봉'], ['stretch', '스트레칭'], ['bike', '자전거'], ['golf', '골프'], ['sjog', '조깅'], ['tt', '탁구']].concat(exList().some(e => e.k === 'yoga') ? [['yoga', '요가']] : []).map(([k, l]) => `<button type="button" data-act="exf" data-v="${k}" aria-pressed="${f === k}">${l}</button>`).join('')}</div>
+    <div class="segb">${[['all', '전체'], ['walk', '걷기'], ['bar', '철봉'], ['stretch', '스트레칭'], ['bike', '자전거'], ['golf', '골프'], ['dumb', '아령'], ['tt', '탁구']].concat(exList().some(e => e.k === 'sjog' || e.k === 'jog') ? [['sjog', '조깅']] : []).concat(exList().some(e => e.k === 'yoga') ? [['yoga', '요가']] : []).map(([k, l]) => `<button type="button" data-act="exf" data-v="${k}" aria-pressed="${f === k}">${l}</button>`).join('')}</div>
     ${items.length ? `<ul class="hist">${items.map(e => ui.confirmDel === e.id
       ? `<li><div class="h-main"><span class="h-v">${esc(entryLine(e)[0])}</span><span class="h-s">이 기록을 삭제할까요?</span></div><div class="row"><button class="btn sm" data-act="del-no">취소</button><button class="btn sm primary" data-act="del-yes" data-id="${esc(e.id)}">삭제</button></div></li>`
       : `<li class="x-${EXC[e.k] || 'r'}"><div class="h-main"><span class="h-v">${exIco(e.k)}${esc(entryLine(e)[0])}</span><span class="h-s">${esc(entryLine(e)[1])} · 약 ${r0(e.met * wt * e.min / 60)}kcal</span></div>${e.pp ? '' : `<button class="x" data-act="del" data-id="${esc(e.id)}" aria-label="삭제">×</button>`}</li>`).join('')}</ul>` : '<p class="empty">기록이 없습니다.</p>'}</section>`;
@@ -772,6 +788,7 @@ function updatePreviews() {
     const k = ($('input[name="exK"]:checked') || {}).value || 'bike', int = intOf(k);
     let m = getV('eMin') || 0;
     if (k === 'walk') { const st = getV('eSteps') || 0, met = metOf(k, int), wt = (list('w').slice(-1)[0] || {}).w || 65; m = r0(st / STEPS_PER_MIN); eMin.value = m; $('#ePrev').innerHTML = `<span>${st.toLocaleString()}보 ≈ <b>${m}분</b> (분당 ${STEPS_PER_MIN}보 환산)</span><span>소모 약 <b>${r0(met * wt * m / 60)}kcal</b></span>`; }
+    else if (k === 'dumb') { const rp = getV('eDb') || 0, met = metOf(k, int), wt = (list('w').slice(-1)[0] || {}).w || 65; m = Math.max(1, Math.round(rp * DB_SEC / 60 * 10) / 10); eMin.value = m; $('#ePrev').innerHTML = `<span>${rp}번 ≈ <b>${m}분</b> (1번 ${DB_SEC}초 환산)</span><span>소모 약 <b>${r0(met * wt * m / 60)}kcal</b></span>`; }
     else if (k === 'stretch') { const rp = getV('eReps') || 0, met = metOf(k, int), wt = (list('w').slice(-1)[0] || {}).w || 65; m = Math.max(1, r0(rp * REP_SEC / 60)); eMin.value = m; $('#ePrev').innerHTML = `<span>${rp}번 ≈ <b>${m}분</b> (1번 ${REP_SEC}초 환산)</span><span>소모 약 <b>${r0(met * wt * m / 60)}kcal</b></span>`; }
     else if (k === 'bar') { const sc = getV('eSec') || HANG_BASE; m = Math.round(sc / 60 * 10) / 10; eMin.value = m; const met = metOf(k, int), wt = (list('w').slice(-1)[0] || {}).w || 65; $('#ePrev').innerHTML = `<span>매달린 시간 <b>${fsec(sc)}</b></span><span>소모 약 <b>${r0(met * wt * sc / 3600)}kcal</b></span>`; }
     else {
@@ -795,7 +812,7 @@ function exBars(items, s, e) {
   else for (let d = s; d < e; d = addDays(d, 1)) bars.push(seg(d, addDays(d, 1)));
   return bars;
 }
-const exLegend = `<div class="legend"><span class="x-v"><i style="background:var(--xc);height:8px"></i>탁구</span><span class="x-e"><i style="background:var(--xc);height:8px"></i>실외자전거</span><span class="x-h"><i style="background:var(--xc);height:8px"></i>골프연습</span><span class="x-w"><i style="background:var(--xc);height:8px"></i>슬로우조깅</span><span class="x-c"><i style="background:var(--xc);height:8px"></i>요가·스트레칭</span><span class="x-i"><i style="background:var(--xc);height:8px"></i>철봉</span><span class="x-r"><i style="background:var(--xc);height:8px"></i>걷기·기타</span></div>`;
+const exLegend = `<div class="legend"><span class="x-v"><i style="background:var(--xc);height:8px"></i>탁구</span><span class="x-e"><i style="background:var(--xc);height:8px"></i>실외자전거</span><span class="x-h"><i style="background:var(--xc);height:8px"></i>골프연습</span><span class="x-w"><i style="background:var(--xc);height:8px"></i>아령·조깅</span><span class="x-c"><i style="background:var(--xc);height:8px"></i>요가·스트레칭</span><span class="x-i"><i style="background:var(--xc);height:8px"></i>철봉</span><span class="x-r"><i style="background:var(--xc);height:8px"></i>걷기·기타</span></div>`;
 function overviewView() {
   const { s, e, label } = periodRange(), ticks = ticksFor(s, e), inR = x => x.ts >= s && x.ts < e;
   const ws = list('w').filter(inR), vs = list('v').filter(inR), es = list('e').filter(inR);
@@ -907,6 +924,7 @@ function ppView() {
 }
 
 /* ───────── 기록 탭 ───────── */
+const todayTxt = () => { const d = new Date(); return `${d.getMonth() + 1}.${d.getDate()} (${WD[d.getDay()]})`; };   // 상단 헤더 삭제 → 날짜는 체중 카드 안에 표시
 function kpi4() {
   const p = S.profile, ws = list('w'), vs = list('v');
   const lw = last(ws), pw = ws[ws.length - 2], lv = last(vs), pv = vs[vs.length - 2];
@@ -914,7 +932,7 @@ function kpi4() {
   const b = lw ? bmiOf(lw.w, p.height) : null;
   const k = (cls, id, label, badge, val, unit, sub) => `<button type="button" class="kpi ${cls}" data-act="goto" data-v="${id}"><span class="kpi-l">${label}</span><span class="kpi-v">${val}<small>${unit}</small></span>${badge ? `<span class="kpi-b">${badge}</span>` : ''}<span class="kpi-s">${sub}</span></button>`;
   return `<section class="kpis kpis-r">
-    ${k('t-w', 'tr-w', '체중 · BMI', b ? pill(BMI[bmiIdx(b)]) : '', lw ? f1(lw.w) : '–', 'kg', lw ? `${pw ? deltaChip(lw.w - pw.w, 'kg') : ''}<span>BMI ${b ? f1(b) : '-'}</span>` : '기록 없음')}
+    ${k('t-w', 'tr-w', '체중 · BMI', b ? pill(BMI[bmiIdx(b)]) : '', lw ? f1(lw.w) : '–', 'kg', lw ? `${pw ? deltaChip(lw.w - pw.w, 'kg') : ''}<span>BMI ${b ? f1(b) : '-'}</span>` : '기록 없음').replace('<span class="kpi-l">', `<span class="kpi-dt">${todayTxt()}</span><span class="kpi-l">`)}
     ${k('t-v', 'tr-v', '혈압', lv ? pill(bpInfo(lv.s, lv.d)) : '', lv ? `${lv.s}/${lv.d}` : '–', '', lv ? (pv ? `직전 ${pv.s}/${pv.d}` : fmtDT(lv.ts)) : '기록 없음')}
     ${k('t-h', 'tr-o', '산소포화도', lo ? pill(spo2Info(lo.o)) : '', lo ? lo.o : '–', '%', os.length > 1 ? `직전 ${os[os.length - 2].o}%` : (lo ? fmtDT(lo.ts) : '기록 없음'))}
     ${k('t-e', 'tr-p', '맥박', lp ? pill(pulseInfo(lp.p)) : '', lp ? lp.p : '–', 'bpm', ps.length > 1 ? `직전 ${ps[ps.length - 2].p}bpm` : (lp ? fmtDT(lp.ts) : '기록 없음'))}
@@ -1186,6 +1204,7 @@ function entryLine(e) {
   if (e.t === 'j') return [`${JCAT[e.cat] || '일지'}: ${e.text}`, fmtDT(e.ts)];
   if (e.t === 'w') return [`${f1(e.w)}kg${e.waist ? ` · 허리 ${e.waist}cm` : ''}`, `${fmtDT(e.ts)} · ${slotOf(e)}${e.memo ? ' · ' + e.memo : ''}`];
   if (e.t === 'v') return [`${e.s}/${e.d}${e.p ? ` · 맥박 ${e.p}` : ''}${e.o ? ` · SpO2 ${e.o}%` : ''}`, `${fmtDT(e.ts)} · ${slotOf(e)} · ${e.arm === 'R' ? '오른팔' : '왼팔'}${e.med === 'before' ? ' · 약 복용 전' : e.med === 'after' ? ' · 약 복용 후' : ''}${e.memo ? ' · ' + e.memo : ''}`];
+  if (e.k === 'dumb' && e.reps) return [`아령 ${e.reps}번 (약 ${e.min}분)`, exSub(e)];
   if (e.k === 'stretch' && e.reps) return [`스트레칭 ${e.reps}번 (약 ${e.min}분)`, exSub(e)];
   if (e.k === 'walk' && e.steps) return [`걷기 ${e.steps.toLocaleString()}보 (약 ${e.min}분)`, exSub(e)];
   if (e.k === 'bar' && e.sec) return [e.sets > 1 ? `철봉 매달리기 ${e.sets}세트 × ${fsec(e.sec)} = ${fsec(e.sec * e.sets)}` : `철봉 매달리기 ${fsec(e.sec)}`, exSub(e)];
@@ -1455,7 +1474,7 @@ function demoState() {
     const r = rnd();
     if (r < 0.22) add({ id: 'e' + i, t: 'e', ts: d + 18 * 3600e3, k: 'bike', min: 40 + r0(rnd() * 20), km: Math.round((12 + rnd() * 6) * 10) / 10, int: 2, met: 7.0 });
     else if (r < 0.36) add({ id: 'e' + i, t: 'e', ts: d + 19 * 3600e3, k: 'golfp', min: 60, int: 2, met: 3.5 });
-    else if (r < 0.48) add({ id: 'e' + i, t: 'e', ts: d + 6.5 * 3600e3, k: 'sjog', min: 30 + r0(rnd() * 15), km: Math.round((3 + rnd() * 1.5) * 10) / 10, int: 2, met: 3.3 });
+    else if (r < 0.48) { const rp = 20 + r0(rnd() * 4) * 5; add({ id: 'e' + i, t: 'e', ts: d + 6.5 * 3600e3, k: 'dumb', reps: rp, min: Math.round(rp * DB_SEC / 60 * 10) / 10, int: 2, met: 3.5 }); }
     else if (r < 0.58) add({ id: 'e' + i, t: 'e', ts: d + 20 * 3600e3, k: 'yoga', min: 40, int: 2, met: 2.7 });
     if (i < 14) { const meds = { '아침 약': true }; if (rnd() > 0.2) meds['저녁 약'] = true; if (rnd() > 0.3) meds['영양제'] = true; add({ id: 'h-' + dayKey(d), t: 'h', ts: d + 12 * 3600e3, meds, med: Object.keys(meds).length === 3, sleep: Math.round((6 + rnd() * 1.5) * 2) / 2, cond: ['good', 'ok', 'tired'][Math.floor(rnd() * 3)], water: 4 + r0(rnd() * 4), steps: 5000 + r0(rnd() * 6000) }); }
   }
@@ -1507,6 +1526,9 @@ function saveEx() {
   if (k === 'walk') {
     steps = r0(getV('eSteps') || 0);
     if (!(steps >= STEP_MIN && steps <= STEP_MAX)) return warn('eWarn', '걸음 수는 3천~25천(3,000~25,000) 사이로 입력해 주세요.');
+  } else if (k === 'dumb') {
+    reps = r0(getV('eDb') || 0);
+    if (!(reps >= DB_MIN && reps <= DB_MAX)) return warn('eWarn', '아령은 5~200번 사이로 입력해 주세요.');
   } else if (k === 'stretch') {
     reps = r0(getV('eReps') || 0);
     if (!(reps >= REP_MIN && reps <= REP_MAX)) return warn('eWarn', '스트레칭은 5~100번 사이로 입력해 주세요.');
@@ -1514,10 +1536,10 @@ function saveEx() {
     sec = r0(getV('eSec') || 0);
     if (!(sec >= HANG_MIN && sec <= HANG_MAX)) return warn('eWarn', '매달린 시간은 30초~3분 사이로 입력해 주세요.');
   } else if (!(min >= 1 && min <= 600)) return warn('eWarn', '운동 시간은 1~600분 사이로 입력해 주세요.');
-  const e = { id: newId('e'), t: 'e', ts: fromInput($('#eTs').value), u: Date.now(), k, min: k === 'bar' ? Math.round(sec / 60 * 10) / 10 : k === 'walk' ? Math.max(1, r0(steps / STEPS_PER_MIN)) : k === 'stretch' ? Math.max(1, r0(reps * REP_SEC / 60)) : r0(min), int, met: metOf(k, int) };
+  const e = { id: newId('e'), t: 'e', ts: fromInput($('#eTs').value), u: Date.now(), k, min: k === 'bar' ? Math.round(sec / 60 * 10) / 10 : k === 'walk' ? Math.max(1, r0(steps / STEPS_PER_MIN)) : k === 'stretch' ? Math.max(1, r0(reps * REP_SEC / 60)) : k === 'dumb' ? Math.max(1, Math.round(reps * DB_SEC / 60 * 10) / 10) : r0(min), int, met: metOf(k, int) };
   if (k === 'bar') e.sec = sec;
   if (k === 'walk') e.steps = steps;
-  if (k === 'stretch') e.reps = reps;
+  if (k === 'stretch' || k === 'dumb') e.reps = reps;
   const km = num($('#eKm').value); if (exOf(k).dist && km) e.km = Math.round(km * 10) / 10;
   const memo = k === 'bike' && $('#eMemo') ? $('#eMemo').value.trim() : ''; if (memo) e.memo = memo;
   S.entries[e.id] = e;
@@ -1555,7 +1577,7 @@ async function backupCsv() {
   const rows = Object.values(S.entries).sort((a, b) => a.ts - b.ts).map(e => {
     const d = new Date(e.ts), dt = dayKey(e.ts) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
     const t = { w: '체중', v: '혈압', e: '운동', h: '생활', j: '일지' }[e.t];
-    return [t, dt, e.t === 'h' ? '' : slotOf(e), e.w, e.waist, e.s, e.d, e.p, e.o, e.arm ? (e.arm === 'R' ? '오른팔' : '왼팔') : '', e.t === 'v' ? ({ before: '복용 전', after: '복용 후', none: '' }[e.med] || '') : '', e.t === 'e' ? exOf(e.k).n : '', e.min, e.km, e.balls, e.int ? INT[e.int] : '', e.met, e.t === 'h' && e.med != null ? (e.med ? 'Y' : 'N') : '', e.sleep, e.water, e.steps, (e.sec ? (e.sets > 1 ? `매달리기 ${e.sets}세트×${e.sec}초` : `매달리기 ${e.sec}초`) + (e.memo ? ' / ' + e.memo : '') : e.steps ? `걸음 ${e.steps}보` + (e.memo ? ' / ' + e.memo : '') : e.reps ? `스트레칭 ${e.reps}번` + (e.memo ? ' / ' + e.memo : '') : '') || e.memo || e.text || (e.meds ? Object.keys(e.meds).join(' ') : '')].map(q).join(',');
+    return [t, dt, e.t === 'h' ? '' : slotOf(e), e.w, e.waist, e.s, e.d, e.p, e.o, e.arm ? (e.arm === 'R' ? '오른팔' : '왼팔') : '', e.t === 'v' ? ({ before: '복용 전', after: '복용 후', none: '' }[e.med] || '') : '', e.t === 'e' ? exOf(e.k).n : '', e.min, e.km, e.balls, e.int ? INT[e.int] : '', e.met, e.t === 'h' && e.med != null ? (e.med ? 'Y' : 'N') : '', e.sleep, e.water, e.steps, (e.sec ? (e.sets > 1 ? `매달리기 ${e.sets}세트×${e.sec}초` : `매달리기 ${e.sec}초`) + (e.memo ? ' / ' + e.memo : '') : e.steps ? `걸음 ${e.steps}보` + (e.memo ? ' / ' + e.memo : '') : e.reps ? `${e.k === 'dumb' ? '아령' : '스트레칭'} ${e.reps}번` + (e.memo ? ' / ' + e.memo : '') : '') || e.memo || e.text || (e.meds ? Object.keys(e.meds).join(' ') : '')].map(q).join(',');
   });
   if (await saveFile(`건강지키미-${dayKey(Date.now())}.csv`, '﻿' + [head.join(','), ...rows].join('\r\n'))) toast('CSV 파일을 저장했습니다');
 }
@@ -1588,8 +1610,8 @@ function closeSheet() { $('#sheet').hidden = true; }
 function render() {
   const v = $('#view'), nav = $('.tabs');
   const d = new Date();
-  $('#today').textContent = `${d.getMonth() + 1}.${d.getDate()} (${WD[d.getDay()]})`;
-  $('#hello').textContent = S.profile && S.profile.nick ? S.profile.nick + '의 건강지키미' : '건강지키미';
+  if ($('#today')) $('#today').textContent = `${d.getMonth() + 1}.${d.getDate()} (${WD[d.getDay()]})`;
+  if ($('#hello')) $('#hello').textContent = S.profile && S.profile.nick ? S.profile.nick + '의 건강지키미' : '건강지키미';
   if (S.profile && !Array.isArray(S.profile.annivs)) { S.profile.annivs = seedAnnivs(); S.profile.updatedAt = Date.now(); if (S === REAL && !DEMO) persist(null); }
   if (!S.profile) {
     nav.hidden = true;
@@ -1671,11 +1693,12 @@ document.addEventListener('input', ev => { if (ev.target.matches('#wIn,#wTs,#vS,
 document.addEventListener('change', ev => {
   const t = ev.target;
   if (t.name === 'exK') {
-    const x = exOf(t.value); $('#eDistRow').hidden = !x.dist; $('#eMinRow').hidden = !!(x.hang || x.steps || x.reps); $('#eMemoRow').hidden = t.value !== 'bike'; $('#eHangRow').hidden = !x.hang; $('#eStepRow').hidden = !x.steps; $('#eRepRow').hidden = !x.reps;
+    const x = exOf(t.value); $('#eDistRow').hidden = !x.dist; $('#eMinRow').hidden = !!(x.hang || x.steps || x.reps || x.dumb); $('#eDbRow').hidden = !x.dumb; $('#eMemoRow').hidden = t.value !== 'bike'; $('#eHangRow').hidden = !x.hang; $('#eStepRow').hidden = !x.steps; $('#eRepRow').hidden = !x.reps;
     const le = list('e').filter(e => e.k === t.value).slice(-1)[0];
     if (x.hang) setV('eSec', lastVal('bar'));
     else if (x.steps) setV('eSteps', lastVal('walk'));
     else if (x.reps) setV('eReps', lastVal('stretch'));
+    else if (x.dumb) setV('eDb', lastVal('dumb'));
     else setV('eMin', lastVal(t.value)); $('#eKm').value = le && le.km ? le.km : ''; $('#eKm').dataset.prev = $('#eKm').value;
     updatePreviews();
   } else if (t.name === 'vSlot' || t.id === 'vTs' || t.id === 'wTs') updatePreviews();

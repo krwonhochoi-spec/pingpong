@@ -35,10 +35,6 @@ html = re.sub(r'<link rel="preconnect"[^>]*>\n', '', html)
 html = re.sub(r'<link rel="stylesheet" href="https://fonts.googleapis.com[^>]*>', '<link rel="stylesheet" href="fonts.css">', html)
 assert 'googleapis' not in html
 js = open(f'{web}/app.js').read()
-pv = f'{root}/../private/anniv.js'   # 가족 기념일(비공개 파일, 저장소에 올리지 않음)
-if os.path.exists(pv):
-    js = js.replace('const DEFAULT_ANNIV = [];', 'const DEFAULT_ANNIV = ' + open(pv, encoding='utf-8').read().strip() + ';', 1)
-    print('private/anniv.js 적용')
 html = html.replace('/*__APP_JS__*/', js)
 doc = ('<!doctype html><html lang="ko"><head><meta charset="utf-8">'
        '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
