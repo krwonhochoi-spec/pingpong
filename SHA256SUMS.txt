@@ -1,6 +1,6 @@
-5d9394e6edb6a7fe35a0cb866d03f1def34ed049b3cfcc7a499880820472d050  ./README.md
-d238997f75a963cee638f8adadd8950e11eaec6a4eb05a679dc953ff2f760d51  ./SHA256SUMS.txt
-367216d1814395ac6a6c9ec592259bccf8bfcc6a356cd816202ed30e3588074d  ./android/AndroidManifest.xml
+6579b948aa569e88c6abd3e9afba55be36b874b208644e3e594da362a1090127  ./README.md
+6ca386656e7e94a30fdc87c0beb614fd3498de7f118e17588de5137ddd36018b  ./SHA256SUMS.txt
+68c0bf51d5072fe522bac1257301216886b330c817c02f51c250ec5784f9d224  ./android/AndroidManifest.xml
 088c55c1fd9a87b92cb286da234e0e3dfc85c6678e054a1fe792176be33c9bc1  ./android/build.sh
 5123afe3480955e81126b70ba4993fd3e97566da250439557e8c364140163f03  ./android/package-lock.json
 fd0d0a28601f2670398f33ba95985cf59052c0dd0896cf3c9e7aee4d321a9d10  ./android/package.json
@@ -23,10 +23,10 @@ a9c3cffdf1cfe95e4d9ed9efeb4f2a01f453cc85225f93b19691425da11af0ba  ./android/res/
 6a95db90ed5999ff40f3b7fa612137b0b6f82e0f2eb74bb790bbd5c647cd9a96  ./android/res/values/colors.xml
 b50fec459500da1732911d125396c012ef45c53b2fe78199e1dea881d8396173  ./android/res/values/strings.xml
 04b86cbabfb8a335978ffc57325a8a2dcfff235e57dde23e68daf36c28befc53  ./android/src/kr/family/healthguard/BootReceiver.java
-1c472440f494fcafeb34a3d25967e6787f20c2836fc8f549aae5a78070eb7ebb  ./android/src/kr/family/healthguard/MainActivity.java
+c7943f9fe029509e059b2fef369cab1a279a517d1ed41f7a3728c35aa957c5d2  ./android/src/kr/family/healthguard/MainActivity.java
 e30a6f09839f5f628d97a6f63feadecc5c0ece5f0989478520fc1b4f601ecedd  ./android/src/kr/family/healthguard/NotifyReceiver.java
 2aca245c58793a32f3cba36850e343b3967bbde4b818360b40d408a0393bd563  ./android/src/kr/family/healthguard/Scheduler.java
-008b87743af698a9073c215093c35f60dee9e6fe16369c62122df1ce42f50604  ./apk/탁구사랑-1.16.apk
+2f27020e2fc39faabbc7c41f3ec759fac48af7460f1d03d08b7931822c80402c  ./apk/탁구사랑-1.18.apk
 2519a0332cd69d4e93bf8ce0769e33062427acc7be4bcea11a4d9ea36d0300d5  ./pingpong/Code.gs
 0611886ad6896a7117521bf28381d1b7fbc571f4ec036031bcd133c562bec49c  ./pingpong/README.md
 4fdc88b0eeae092be3666bbab972587740658b56bb935701b05211619fa2e02b  ./pingpong/favicon.ico
@@ -41,6 +41,6 @@ a8706a992a1686f884bda05afab699a30cd2c135e9f7ef533ec887badd67187f  ./pingpong/ico
 cf7008b5f71170014203b7a53d75fac7f0f75fa854834daa57ca8e5416585c3e  ./pingpong/manifest.webmanifest
 b65b1ee1cc7f579be8b14cb8287a6aedb3dbe07b2d62e72e8b3bc38286a7144e  ./pingpong/sw.js
 b54bdcb43f9f2f13bc8189e4b9d3115f86b64a845dc0502685dc95d3158d77e6  ./web/app.html
-3c8d543d4cbeea473b42407bd9483afb59f50dd19bc16274beb56e9c860c9e7e  ./web/app.js
+ecd8a7582ef398cb618b91152549aed4f9aa8056411d57af006155043bf0f1ad  ./web/app.js
 4838c8a62df8ca64edd416e58544c6b23937b9187ada64390c5baf4225353a9d  ./web/build_web.py
-a9daa0ad5f1f647530c6ef04127554cfcebf348ead64bb39ec908972c990982e  ./web/dist/health.html
+d3ce512d925e8a890eaaa1c60c1676ca35b2e67ece4e2eb85583df47d6b3c94c  ./web/dist/health.html

@@ -80,7 +80,7 @@ function lastVal(k) {
 }
 const defMin = k => ({ golfp: 60, bike: 120, sjog: 60 })[k] || 30;   // 시간 기본값(센터): 골프 60분·자전거 120분·슬로우조깅 60분
 const DB_MIN = 5, DB_MAX = 200, DB_SEC = 5;   // 아령 번수 범위(5~200번), 1번 ≈ 5초 환산(추정)
-const REP_MIN = 5, REP_MAX = 100, REP_SEC = 30;   // 스트레칭 번수 입력 범위(5~100번), 1번 ≈ 30초 환산(추정)
+const REP_MIN = 5, REP_MAX = 100, REP_SEC = 3;   // 스트레칭 번수 입력 범위(5~100번), 1번 ≈ 3초(사용자 실측 기준)
 const exOf = k => EX.find(x => x.k === k) || EX[EX.length - 1];
 const metOf = (k, int) => { const x = exOf(k); return x.mets ? x.mets[int || 2] : (x.met ?? ETC_MET[int || 2]); };
 const modEq = e => e.met >= 6 ? e.min * 2 : e.met >= 3 ? e.min : 0;
@@ -278,7 +278,9 @@ let S = REAL;
 let DEMO = false;
 const APP = !!window.Android;
 const remote = { state: APP ? 'local' : 'connecting', db: null, uid: null, lastSync: 0 };
-const ui = { tab: 'rec', logTab: 'w', metric: 'all', period: 'week', offset: 0, confirmDel: null, pending: null };
+const TAB_KEY = 'krhealth.lastTab', TABS = ['rec', 'pp', 'ex', 'ann', 'set', 'report', 'life'];
+const savedTab = (() => { try { const t = localStorage.getItem(TAB_KEY); return TABS.includes(t) ? t : 'rec'; } catch (e) { return 'rec'; } })();   // 앱을 열면 마지막으로 보던 화면
+const ui = { tab: savedTab, logTab: 'w', metric: 'all', period: 'week', offset: 0, confirmDel: null, pending: null };
 let bootTimedOut = false;
 
 function merge(a, b) {
@@ -686,7 +688,7 @@ function exForm() {
         ${stp5('eDb', '아령 횟수', lastVal('dumb'), { min: DB_MIN, max: DB_MAX, step: 5, big: 10, unit: '5~200번', base: 30, fmt: 'rep', sfx: '번', cls: 'stp-s' })}
       </div>
       <div id="eRepRow"${x0.reps ? '' : ' hidden'}>
-        ${stp5('eReps', '스트레칭 횟수', lastVal('stretch'), { min: REP_MIN, max: REP_MAX, step: 1, big: 5, unit: '5~100번', base: 30, fmt: 'rep', sfx: '번', cls: 'stp-s' })}
+        ${stp5('eReps', '스트레칭 횟수', lastVal('stretch'), { min: REP_MIN, max: REP_MAX, step: 5, big: 10, unit: '5~100번', base: 30, fmt: 'rep', sfx: '번', cls: 'stp-s' })}
       </div>
       <div id="eHangRow"${x0.hang ? '' : ' hidden'}>
         ${stp5('eSec', '매달린 시간', lastVal('bar'), { min: HANG_MIN, max: HANG_MAX, step: 5, big: 10, unit: '30초~3분', base: HANG_BASE, fmt: 'sec', sfx: '초', cls: 'stp-s' })}
@@ -789,7 +791,7 @@ function updatePreviews() {
     let m = getV('eMin') || 0;
     if (k === 'walk') { const st = getV('eSteps') || 0, met = metOf(k, int), wt = (list('w').slice(-1)[0] || {}).w || 65; m = r0(st / STEPS_PER_MIN); eMin.value = m; $('#ePrev').innerHTML = `<span>${st.toLocaleString()}보 ≈ <b>${m}분</b> (분당 ${STEPS_PER_MIN}보 환산)</span><span>소모 약 <b>${r0(met * wt * m / 60)}kcal</b></span>`; }
     else if (k === 'dumb') { const rp = getV('eDb') || 0, met = metOf(k, int), wt = (list('w').slice(-1)[0] || {}).w || 65; m = Math.max(1, Math.round(rp * DB_SEC / 60 * 10) / 10); eMin.value = m; $('#ePrev').innerHTML = `<span>${rp}번 ≈ <b>${m}분</b> (1번 ${DB_SEC}초 환산)</span><span>소모 약 <b>${r0(met * wt * m / 60)}kcal</b></span>`; }
-    else if (k === 'stretch') { const rp = getV('eReps') || 0, met = metOf(k, int), wt = (list('w').slice(-1)[0] || {}).w || 65; m = Math.max(1, r0(rp * REP_SEC / 60)); eMin.value = m; $('#ePrev').innerHTML = `<span>${rp}번 ≈ <b>${m}분</b> (1번 ${REP_SEC}초 환산)</span><span>소모 약 <b>${r0(met * wt * m / 60)}kcal</b></span>`; }
+    else if (k === 'stretch') { const rp = getV('eReps') || 0, met = metOf(k, int), wt = (list('w').slice(-1)[0] || {}).w || 65; m = Math.max(0.1, Math.round(rp * REP_SEC / 60 * 10) / 10); eMin.value = m; $('#ePrev').innerHTML = `<span>${rp}번 ≈ <b>${m}분</b> (1번 ${REP_SEC}초 환산)</span><span>소모 약 <b>${r0(met * wt * m / 60)}kcal</b></span>`; }
     else if (k === 'bar') { const sc = getV('eSec') || HANG_BASE; m = Math.round(sc / 60 * 10) / 10; eMin.value = m; const met = metOf(k, int), wt = (list('w').slice(-1)[0] || {}).w || 65; $('#ePrev').innerHTML = `<span>매달린 시간 <b>${fsec(sc)}</b></span><span>소모 약 <b>${r0(met * wt * sc / 3600)}kcal</b></span>`; }
     else {
     const met = metOf(k, int), wt = (list('w').slice(-1)[0] || {}).w || 65;
@@ -1536,7 +1538,7 @@ function saveEx() {
     sec = r0(getV('eSec') || 0);
     if (!(sec >= HANG_MIN && sec <= HANG_MAX)) return warn('eWarn', '매달린 시간은 30초~3분 사이로 입력해 주세요.');
   } else if (!(min >= 1 && min <= 600)) return warn('eWarn', '운동 시간은 1~600분 사이로 입력해 주세요.');
-  const e = { id: newId('e'), t: 'e', ts: fromInput($('#eTs').value), u: Date.now(), k, min: k === 'bar' ? Math.round(sec / 60 * 10) / 10 : k === 'walk' ? Math.max(1, r0(steps / STEPS_PER_MIN)) : k === 'stretch' ? Math.max(1, r0(reps * REP_SEC / 60)) : k === 'dumb' ? Math.max(1, Math.round(reps * DB_SEC / 60 * 10) / 10) : r0(min), int, met: metOf(k, int) };
+  const e = { id: newId('e'), t: 'e', ts: fromInput($('#eTs').value), u: Date.now(), k, min: k === 'bar' ? Math.round(sec / 60 * 10) / 10 : k === 'walk' ? Math.max(1, r0(steps / STEPS_PER_MIN)) : k === 'stretch' ? Math.max(0.1, Math.round(reps * REP_SEC / 60 * 10) / 10) : k === 'dumb' ? Math.max(1, Math.round(reps * DB_SEC / 60 * 10) / 10) : r0(min), int, met: metOf(k, int) };
   if (k === 'bar') e.sec = sec;
   if (k === 'walk') e.steps = steps;
   if (k === 'stretch' || k === 'dumb') e.reps = reps;
@@ -1591,7 +1593,7 @@ function importFile(file) {
       o.entries.forEach(e => { if (e && e.id && e.t && isFinite(e.ts)) inc.entries[e.id] = e; });
       if (DEMO) { toast('예시 모드에서는 불러올 수 없습니다'); return; }
       const before = Object.keys(REAL.entries).length;
-      REAL = merge(REAL, inc); S = REAL;
+      REAL = merge(REAL, inc); S = REAL; migrateStretch(REAL);
       Object.values(REAL.entries).forEach(e => dirty.months.add(monthKey(e.ts)));
       persist(null); render();
       toast(`${Math.max(0, Object.keys(REAL.entries).length - before)}건을 새로 불러왔습니다`);
@@ -1608,6 +1610,7 @@ function closeSheet() { $('#sheet').hidden = true; }
 
 /* ───────── 라우터 ───────── */
 function render() {
+  if (S.profile && !DEMO) { try { localStorage.setItem(TAB_KEY, ui.tab); } catch (e) { } }
   const v = $('#view'), nav = $('.tabs');
   const d = new Date();
   if ($('#today')) $('#today').textContent = `${d.getMonth() + 1}.${d.getDate()} (${WD[d.getDay()]})`;
@@ -1726,6 +1729,20 @@ document.addEventListener('submit', ev => {
 });
 
 /* ───────── 시작 ───────── */
+/** 1.18: 과거 스트레칭 기록(1번 30초 기준)을 1번 3초 기준 시간으로 고쳐 씀(앱 시작·백업 불러오기 때, 이미 맞는 기록은 그대로) */
+function migrateStretch(st) {
+  if (!st || !st.entries) return 0;
+  let n = 0;
+  Object.values(st.entries).forEach(e => {
+    if (e.t === 'e' && e.k === 'stretch' && e.reps) {
+      const m = Math.max(0.1, Math.round(e.reps * REP_SEC / 60 * 10) / 10);
+      if (e.min !== m) { e.min = m; e.u = Date.now(); n++; if (typeof dirty !== 'undefined') dirty.months.add(monthKey(e.ts)); }
+    }
+  });
+  if (n) st.meta.updatedAt = Date.now();
+  return n;
+}
+try { const n = migrateStretch(REAL); if (n) saveLocal(); if (n) setTimeout(() => toast(`지난 스트레칭 기록 ${n}건의 시간을 1번 3초 기준으로 고쳤습니다`), 800); } catch (e) { }
 try { ppSyncCache(); } catch (e) { }
 render();
 setTimeout(() => { bootTimedOut = true; if (!S.profile) render(); }, APP ? 0 : 3000);
